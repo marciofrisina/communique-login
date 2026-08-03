@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+Pinstripe&display=swap" rel="stylesheet" />
+  <title>Communique 7 — Sign in</title>
+  <style>
+    :root { background: #030508; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: radial-gradient(circle at 52% 48%, #0c1d2b 0%, #050a10 35%, #020304 75%); }
+    canvas { display: block; width: 100%; height: 100%; }
+    .vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,.32) 72%, rgba(0,0,0,.82) 130%); }
+    .login-wrap { position: fixed; inset: 0; z-index: 1; display: grid; place-items: center; padding: 24px; }
+    .login-card { width: min(100%, 400px); padding: 38px; color: #eef8ff; border: 1px solid rgba(167, 211, 237, .22); border-radius: 20px; background: rgba(5, 11, 18, .70); box-shadow: 0 24px 80px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.09); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .brand-name { margin: 0 0 8px; color: rgba(218, 237, 255, .92); text-align: center; font: 400 27px/1 "Alumni Sans Pinstripe", sans-serif; letter-spacing: .12em; }
+    .brand { display: flex; justify-content: center; height: 102px; margin-bottom: 21px; }
+    .brand-mark { width: 168px; height: 102px; overflow: visible; }
+    .brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; opacity: .92; filter: saturate(1.12) contrast(1.04) brightness(1.08); }
+    h1 { margin: 0; font: 600 28px/1.15 system-ui, sans-serif; letter-spacing: -.045em; }
+    .intro { margin: 9px 0 27px; color: #9faebd; font: 400 14px/1.5 system-ui, sans-serif; }
+    .field { display: grid; gap: 8px; margin-top: 16px; }
+    label, .options { font: 500 12px/1.2 system-ui, sans-serif; color: #c0cbd4; }
+    .input-wrap { position: relative; }
+    input[type="email"], input[type="password"], input[type="text"] { width: 100%; height: 48px; padding: 0 44px 0 14px; border: 1px solid rgba(181, 207, 223, .17); border-radius: 10px; outline: none; color: #f3fbff; background: rgba(255,255,255,.055); font: 400 15px system-ui, sans-serif; transition: .2s; }
+    input::placeholder { color: #70808d; }
+    input:focus { border-color: rgba(103, 232, 237, .8); box-shadow: 0 0 0 3px rgba(103,232,237,.11), 0 0 22px rgba(103,232,237,.08); }
+    .toggle-password { position: absolute; right: 9px; top: 7px; height: 34px; padding: 0 8px; border: 0; color: #9fdce2; background: transparent; cursor: pointer; font: 500 12px system-ui, sans-serif; }
+    .options { display: flex; justify-content: space-between; align-items: center; margin: 17px 0 23px; }
+    .remember { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+    input[type="checkbox"] { accent-color: #65e8ed; }
+    a { color: #79e6ea; text-decoration: none; } a:hover { text-decoration: underline; }
+    .submit { width: 100%; height: 50px; border: 0; border-radius: 10px; cursor: pointer; color: #031013; background: linear-gradient(105deg, #72e4e9, #92bcff); box-shadow: 0 8px 25px rgba(69, 187, 211, .23); font: 700 14px system-ui, sans-serif; transition: transform .2s, box-shadow .2s; }
+    .submit:hover { transform: translateY(-2px); box-shadow: 0 11px 30px rgba(69, 187, 211, .36); }
+    .submit:active { transform: translateY(0); }
+    .status { min-height: 18px; margin: 14px 0 0; text-align: center; color: #8ee8c5; font: 13px/1.4 system-ui, sans-serif; }
+    .signup { margin: 24px 0 0; text-align: center; color: #9faebd; font: 13px/1.4 system-ui, sans-serif; }
+    .version { margin: 23px 0 0; text-align: center; color: #647480; font: 11px/1 system-ui, sans-serif; letter-spacing: .08em; }
+    .release-notes { display: grid; place-items: center; width: 28px; height: 28px; margin: 9px auto 0; border: 1px solid rgba(169, 198, 255, .15); border-radius: 50%; color: #8fbac8; transition: .2s; }
+    .release-notes:hover, .release-notes:focus-visible { border-color: rgba(101, 232, 237, .7); color: #bff9fb; background: rgba(101, 232, 237, .08); box-shadow: 0 0 16px rgba(101, 232, 237, .13); outline: none; }
+    .release-notes svg { width: 13px; height: 13px; }
+    @media (max-width: 460px) { .login-wrap { padding: 16px; } .login-card { padding: 29px 23px; border-radius: 16px; } .brand-name { font-size: 24px; } .brand { height: 80px; } .brand-mark { width: 132px; height: 80px; } h1 { font-size: 25px; } }
+    @media (prefers-reduced-motion: reduce) { .vignette { background: rgba(0,0,0,.3); } }
+  </style>
+</head>
+<body>
+  <canvas id="particles" aria-label="Abstract orbital particle animation"></canvas>
+  <div class="vignette"></div>
+  <main class="login-wrap">
+    <section class="login-card" aria-labelledby="login-title">
+      <p class="brand-name">COMMUNIQUE 7</p>
+      <div class="brand"><span class="brand-mark"><img src="communique-logo-336.webp" alt="Communique" /></span></div>
+      <h1 id="login-title">Welcome back</h1>
+      <p class="intro">Enter your credentials to continue.</p>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="name@company.com" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required minlength="6" />
+            <button class="toggle-password" type="button" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <div class="options">
+          <label class="remember"><input type="checkbox" name="remember" /> Remember me</label>
+          <a href="#recover">Forgot password?</a>
+        </div>
+        <button class="submit" type="submit">Sign in</button>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="signup">Don't have an account? <a href="#signup">Request an account</a></p>
+      <p class="version">VERSION 1.0</p>
+      <a class="release-notes" href="release-notes.html" aria-label="View what's new in version 1.0" title="What's new">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.75a6.75 6.75 0 0 1 6.75 6.75c0 7.75 2.5 8.75 2.5 8.75H2.75s2.5-1 2.5-8.75A6.75 6.75 0 0 1 12 2.75Z"/><path d="M9.5 21.25h5"/></svg>
+      </a>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector('#particles');
+      const ctx = canvas.getContext('2d');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let width, height, dpr, cx, cy, radius, particles, dust, comets, nextComet = 0, passingOrbit = null, nextPassingOrbit = 30, orbitFadeCanvas, orbitFadeCtx;
+      const palette = ['#65e8ed', '#70a6ff', '#a774ff', '#e7a65e'];
+
+      const rgba = (hex, alpha) => {
+        const n = parseInt(hex.slice(1), 16);
+        return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+      };
+      const random = (min, max) => min + Math.random() * (max - min);
+
+      function resize() {
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        width = innerWidth; height = innerHeight;
+        canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        orbitFadeCanvas = document.createElement('canvas');
+        orbitFadeCanvas.width = canvas.width; orbitFadeCanvas.height = canvas.height;
+        orbitFadeCtx = orbitFadeCanvas.getContext('2d');
+        orbitFadeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cx = width * .5; cy = height * .5;
+        // Twice the former visual reach; particles travel outward from this core.
+        radius = Math.min(width, height) * (width < 600 ? .60 : .54);
+        const count = Math.round(Math.max(220, Math.min(720, width * height / 2200)));
+        particles = Array.from({ length: count }, (_, i) => ({
+          orbit: radius * random(.36, .78), angle: random(0, Math.PI * 2),
+          speed: random(.018, .052) * (i % 2 ? 1 : -1), lean: random(.32, .90),
+          tilt: random(-.75, .75), depth: random(.16, .40), size: random(.38, 1.55),
+          color: palette[i % palette.length], phase: random(0, Math.PI * 2),
+          expansion: random(.017, .042), sparkle: Math.random() < .055
+        }));
+        dust = Array.from({ length: Math.round(count * .42) }, () => ({
+          x: random(0, width), y: random(0, height), r: random(.25, 1.1), a: random(.08, .48), color: palette[Math.floor(random(0, palette.length))]
+        }));
+        comets = [];
+      }
+
+      function point(p, time) {
+        const a = p.angle + time * p.speed + Math.sin(time * .13 + p.phase) * .045;
+        // Particle streams expand from the core; perspective gives nearby grains more presence.
+        const life = (time * p.expansion + p.phase / (Math.PI * 2)) % 1;
+        const distance = p.orbit * (.22 + Math.pow(life, .72) * 2.62);
+        const x = Math.cos(a) * distance;
+        const y = Math.sin(a) * distance * p.lean;
+        const sin = Math.sin(p.tilt), cos = Math.cos(p.tilt);
+        const z = Math.sin(a + p.phase * .63) * distance * p.depth;
+        const perspective = (radius * 4.2) / (radius * 4.2 - z);
+        return {
+          x: cx + (x * cos - y * sin) * perspective,
+          y: cy + (x * sin + y * cos) * perspective,
+          life, depth: perspective
+        };
+      }
+
+      function orbitLine(scale, inclination, node, color, time, alpha, speed, glow = 0, fadePhase = null) {
+        const lineCtx = fadePhase === null ? ctx : orbitFadeCtx;
+        if (fadePhase !== null) lineCtx.clearRect(0, 0, width, height);
+        const orbitTime = time * speed;
+        const orbitX = cx + Math.cos(orbitTime * .74 + node * 3) * radius * .052;
+        const orbitY = cy + Math.sin(orbitTime * .61 + node * 2) * radius * .037;
+        const risingNode = node + orbitTime;
+        const planeTilt = inclination + Math.sin(time * Math.abs(speed) * .6 + scale * 9) * .035;
+        const cameraDistance = radius * 4.4;
+        lineCtx.lineCap = 'round';
+        const points = [];
+        for (let n = 0; n <= 220; n++) {
+          const a = n / 220 * Math.PI * 2 + orbitTime;
+          const x = Math.cos(a) * radius * scale;
+          const y = Math.sin(a) * radius * scale * Math.cos(planeTilt);
+          const z = Math.sin(a) * radius * scale * Math.sin(planeTilt);
+          // Project a real tilted circle through a virtual camera: near points grow very slightly.
+          const perspective = cameraDistance / (cameraDistance - z);
+          const xx = orbitX + (x * Math.cos(risingNode) - y * Math.sin(risingNode)) * perspective;
+          const yy = orbitY + (x * Math.sin(risingNode) + y * Math.cos(risingNode)) * perspective;
+          points.push({ x: xx, y: yy, angle: a });
+        }
+        lineCtx.shadowBlur = glow; lineCtx.shadowColor = color;
+        const lineWidth = color === '#e7a65e' ? 1.25 : .72;
+        lineCtx.beginPath();
+        points.forEach((point, index) => index ? lineCtx.lineTo(point.x, point.y) : lineCtx.moveTo(point.x, point.y));
+        lineCtx.strokeStyle = rgba(color, alpha); lineCtx.lineWidth = lineWidth; lineCtx.stroke();
+        lineCtx.shadowBlur = 0;
+        if (fadePhase !== null) {
+          // Erase the path smoothly down to the page background at the trailing end.
+          lineCtx.globalCompositeOperation = 'destination-out';
+          lineCtx.lineCap = 'butt';
+          for (let n = 1; n < points.length; n++) {
+            const delta = Math.atan2(Math.sin(points[n].angle - fadePhase), Math.cos(points[n].angle - fadePhase));
+            const normalized = Math.min(1, Math.abs(delta) / .64);
+            const erase = 1 - normalized * normalized * (3 - 2 * normalized);
+            if (erase <= 0) continue;
+            lineCtx.strokeStyle = `rgba(0, 0, 0, ${erase})`;
+            lineCtx.lineWidth = lineWidth + 1.1;
+            lineCtx.beginPath(); lineCtx.moveTo(points[n - 1].x, points[n - 1].y); lineCtx.lineTo(points[n].x, points[n].y); lineCtx.stroke();
+          }
+          lineCtx.globalCompositeOperation = 'source-over';
+          ctx.drawImage(orbitFadeCanvas, 0, 0, width, height);
+        }
+      }
+
+      function orbitPoint(scale, inclination, node, time, precessionSpeed, phase) {
+        const orbitTime = time * precessionSpeed;
+        const orbitX = cx + Math.cos(orbitTime * .74 + node * 3) * radius * .052;
+        const orbitY = cy + Math.sin(orbitTime * .61 + node * 2) * radius * .037;
+        const risingNode = node + orbitTime;
+        const planeTilt = inclination + Math.sin(time * Math.abs(precessionSpeed) * .6 + scale * 9) * .035;
+        const x = Math.cos(phase) * radius * scale;
+        const y = Math.sin(phase) * radius * scale * Math.cos(planeTilt);
+        const z = Math.sin(phase) * radius * scale * Math.sin(planeTilt);
+        const perspective = (radius * 4.4) / (radius * 4.4 - z);
+        return {
+          x: orbitX + (x * Math.cos(risingNode) - y * Math.sin(risingNode)) * perspective,
+          y: orbitY + (x * Math.sin(risingNode) + y * Math.cos(risingNode)) * perspective,
+          depth: perspective
+        };
+      }
+
+      function drawOrbiter(time) {
+        const phase = time * .20 + .8;
+        const steps = 32;
+        const trail = Array.from({ length: steps + 1 }, (_, index) =>
+          orbitPoint(1.17, 1.17, -.58, time, .041, phase - (steps - index) * .030)
+        );
+        ctx.lineCap = 'round';
+        const head = trail[trail.length - 1];
+        const tailGradient = ctx.createLinearGradient(trail[0].x, trail[0].y, head.x, head.y);
+        tailGradient.addColorStop(0, 'rgba(255, 209, 154, 0)');
+        tailGradient.addColorStop(.36, 'rgba(255, 209, 154, .035)');
+        tailGradient.addColorStop(.72, 'rgba(255, 209, 154, .16)');
+        tailGradient.addColorStop(1, 'rgba(255, 209, 154, .42)');
+        const strokeTrail = (start, stroke, lineWidth) => {
+          ctx.beginPath();
+          trail.slice(start).forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+          ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke();
+        };
+        strokeTrail(0, tailGradient, .92);
+        const innerGradient = ctx.createLinearGradient(trail[10].x, trail[10].y, head.x, head.y);
+        innerGradient.addColorStop(0, 'rgba(255, 209, 154, 0)');
+        innerGradient.addColorStop(.55, 'rgba(255, 209, 154, .08)');
+        innerGradient.addColorStop(1, 'rgba(255, 225, 184, .52)');
+        strokeTrail(10, innerGradient, .52);
+        const size = 1.35 * head.depth;
+        ctx.shadowBlur = 14; ctx.shadowColor = '#e7a65e';
+        ctx.fillStyle = 'rgba(255, 220, 167, .94)';
+        ctx.beginPath(); ctx.arc(head.x, head.y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      function drawPassingOrbit(realTime) {
+        if (realTime >= nextPassingOrbit) {
+          const direction = Math.random() > .5 ? 1 : -1;
+          passingOrbit = {
+            start: realTime, duration: 5, direction,
+            x: random(width * .28, width * .72), y: random(height * .28, height * .72),
+            size: Math.max(width, height) * random(.56, .76), tilt: random(-.86, .86),
+            phase: random(0, Math.PI * 2), color: Math.random() > .62 ? '#e7a65e' : '#a9c6ff',
+            dust: Array.from({ length: 180 }, () => ({
+              arc: random(-1.14, 1.14), spread: (Math.random() - Math.random()) * .052,
+              size: random(.32, 1.35), opacity: random(.12, .72)
+            }))
+          };
+          nextPassingOrbit = realTime + 30;
+        }
+        if (!passingOrbit) return;
+        const progress = (realTime - passingOrbit.start) / passingOrbit.duration;
+        if (progress >= 1) { passingOrbit = null; return; }
+        const visibility = Math.sin(progress * Math.PI);
+        const drift = (progress - .5) * width * .16 * passingOrbit.direction;
+        const phase = passingOrbit.phase + (progress - .5) * .34 * passingOrbit.direction;
+        const planeTilt = .55;
+        const cameraDistance = passingOrbit.size * 4.5;
+        passingOrbit.dust.forEach(speck => {
+          const a = phase + speck.arc;
+          const radiusAtPoint = passingOrbit.size * (1 + speck.spread);
+          const x = Math.cos(a) * radiusAtPoint;
+          const y = Math.sin(a) * radiusAtPoint * Math.cos(planeTilt);
+          const z = Math.sin(a) * radiusAtPoint * Math.sin(planeTilt);
+          const perspective = cameraDistance / (cameraDistance - z);
+          const px = passingOrbit.x + drift + (x * Math.cos(passingOrbit.tilt) - y * Math.sin(passingOrbit.tilt)) * perspective;
+          const py = passingOrbit.y + (x * Math.sin(passingOrbit.tilt) + y * Math.cos(passingOrbit.tilt)) * perspective;
+          const endFade = Math.max(0, 1 - Math.abs(speck.arc) / 1.14);
+          const alpha = visibility * endFade * endFade * speck.opacity * .52;
+          ctx.fillStyle = rgba(passingOrbit.color, alpha);
+          ctx.fillRect(px, py, speck.size * perspective, speck.size * perspective);
+        });
+      }
+
+      function launchComet(time) {
+        const fromLeft = Math.random() > .5;
+        const y = random(height * .08, height * .92);
+        const x = fromLeft ? -50 : width + 50;
+        const destinationY = random(height * .05, height * .95);
+        const duration = random(2.5, 4.5);
+        comets.push({ x, y, endX: fromLeft ? width + 70 : -70, endY: destinationY, start: time, duration, color: palette[Math.floor(random(0, palette.length))] });
+        nextComet = time + random(5.5, 12);
+      }
+
+      function drawComets(time) {
+        if (time > nextComet) launchComet(time);
+        comets = comets.filter(c => {
+          const progress = (time - c.start) / c.duration;
+          if (progress >= 1) return false;
+          const ease = progress * progress * (3 - 2 * progress);
+          const x = c.x + (c.endX - c.x) * ease, y = c.y + (c.endY - c.y) * ease;
+          const dx = c.endX - c.x, dy = c.endY - c.y, length = Math.hypot(dx, dy);
+          const opacity = Math.sin(progress * Math.PI) * .88;
+          const gradient = ctx.createLinearGradient(x - dx / length * 85, y - dy / length * 85, x, y);
+          gradient.addColorStop(0, rgba(c.color, 0)); gradient.addColorStop(1, rgba(c.color, opacity));
+          ctx.strokeStyle = gradient; ctx.lineWidth = 1.15; ctx.beginPath(); ctx.moveTo(x - dx / length * 85, y - dy / length * 85); ctx.lineTo(x, y); ctx.stroke();
+          ctx.shadowBlur = 20; ctx.shadowColor = c.color; ctx.fillStyle = rgba(c.color, opacity); ctx.beginPath(); ctx.arc(x, y, 2.1, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+          return true;
+        });
+      }
+
+      function draw(ms) {
+        const realTime = ms / 1000;
+        const time = ms / 2000;
+        ctx.clearRect(0, 0, width, height);
+        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.85);
+        glow.addColorStop(0, 'rgba(41, 98, 125, .18)'); glow.addColorStop(.45, 'rgba(12, 24, 45, .09)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
+        dust.forEach(s => { ctx.fillStyle = rgba(s.color, s.a); ctx.fillRect(s.x, s.y, s.r, s.r); });
+        ctx.globalCompositeOperation = 'lighter';
+        // Restrained concentric paths: a deep-space orbital diagram rather than a decorative swirl.
+        orbitLine(.30, .22, .04, '#a9c6ff', time, .18, .037);
+        orbitLine(.43, .38, .09, '#a9c6ff', time, .16, -.029);
+        orbitLine(.57, .57, -.06, '#7395de', time, .14, .022);
+        orbitLine(.72, .73, .12, '#a9c6ff', time, .13, -.018);
+        orbitLine(.89, .91, -.09, '#7395de', time, .11, .014);
+        orbitLine(1.08, 1.06, .07, '#a9c6ff', time, .09, -.011);
+        const orbiterPhase = time * .20 + .8;
+        orbitLine(1.17, 1.17, -.58, '#e7a65e', time, .25, .041, 6, orbiterPhase - 32 * .030);
+        drawPassingOrbit(realTime);
+        drawOrbiter(time);
+        particles.forEach(p => {
+          const now = point(p, time), tail = point(p, time - .14);
+          const edge = Math.min(now.x / width, (width - now.x) / width, now.y / height, (height - now.y) / height);
+          const edgeFade = Math.max(0, Math.min(1, edge * 10));
+          const birthFade = Math.min(1, now.life / .075);
+          const alpha = edgeFade * birthFade * Math.pow(1 - now.life, .52) * (.72 + now.depth * .2);
+          if (!alpha) return;
+          if (now.life > p.expansion * .14) {
+            ctx.strokeStyle = rgba(p.color, .19 * alpha); ctx.lineWidth = p.size * now.depth * .62;
+            ctx.beginPath(); ctx.moveTo(tail.x, tail.y); ctx.lineTo(now.x, now.y); ctx.stroke();
+          }
+          const twinkle = .75 + Math.sin(time * .9 + p.phase) * .25;
+          const particleSize = p.size * now.depth;
+          if (p.sparkle) { ctx.shadowBlur = 7; ctx.shadowColor = p.color; }
+          ctx.fillStyle = rgba(p.color, (.31 + twinkle * .22) * alpha);
+          ctx.beginPath(); ctx.arc(now.x, now.y, particleSize, 0, Math.PI * 2); ctx.fill();
+          if (p.sparkle) ctx.shadowBlur = 0;
+        });
+        drawComets(time);
+        ctx.globalCompositeOperation = 'source-over';
+        requestAnimationFrame(draw);
+      }
+      addEventListener('resize', resize, { passive: true });
+      resize(); requestAnimationFrame(draw);
+    })();
+    const form = document.querySelector('#login-form');
+    const password = document.querySelector('#password');
+    const toggle = document.querySelector('.toggle-password');
+    const status = document.querySelector('#status');
+    toggle.addEventListener('click', () => {
+      const visible = password.type === 'text';
+      password.type = visible ? 'password' : 'text';
+      toggle.textContent = visible ? 'Show' : 'Hide';
+      toggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+    });
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      status.textContent = 'Credentials validated. Connect this form to your authentication service.';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+Pinstripe&display=swap" rel="stylesheet" />
+  <title>Communique 7 — Sign in · Version 1.3</title>
+  <style>
+    :root { background: #020307; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: #020307; font-family: system-ui, sans-serif; }
+    canvas { display: block; width: 100%; height: 100%; }
+    #orbit-foreground { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    .orbiter-label { position: fixed; z-index: 4; min-width: 132px; padding: 7px 10px 8px; border: 1px solid rgba(255, 191, 119, .28); border-radius: 8px; pointer-events: none; opacity: 0; color: #ffe6c7; background: rgba(13, 9, 10, .84); box-shadow: 0 8px 28px rgba(0,0,0,.36), 0 0 18px rgba(255, 137, 70, .11); backdrop-filter: blur(10px); transform: translate(12px, -50%) scale(.96); transform-origin: left center; transition: opacity .18s ease, transform .18s ease; font: 500 12px/1.25 system-ui, sans-serif; letter-spacing: .02em; }
+    .orbiter-label.visible { opacity: 1; transform: translate(12px, -50%) scale(1); }
+    .orbiter-label small { display: block; margin-top: 2px; color: #a9907c; font-size: 9px; letter-spacing: .09em; text-transform: uppercase; }
+    .veil { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,.12) 55%, rgba(0,0,0,.78) 120%); }
+    .login-wrap { position: fixed; z-index: 1; inset: 0; display: grid; place-items: center; padding: 24px; }
+    .login-card { width: min(100%, 402px); padding: 34px 38px 31px; border: 1px solid rgba(190, 219, 255, .20); border-radius: 20px; color: #eff8ff; background: rgba(4, 8, 18, .66); box-shadow: 0 26px 100px rgba(0,0,0,.56), inset 0 1px 0 rgba(255,255,255,.10); backdrop-filter: blur(18px) saturate(1.15); -webkit-backdrop-filter: blur(18px) saturate(1.15); }
+    .brand-name { margin: 0 0 8px; color: rgba(224, 239, 255, .94); text-align: center; font: 400 27px/1 "Alumni Sans Pinstripe", sans-serif; letter-spacing: .12em; }
+    .brand { display: flex; justify-content: center; height: 84px; margin: 0 0 20px; }.brand img { width: 138px; height: 84px; object-fit: contain; opacity: .92; filter: saturate(1.18) contrast(1.06) brightness(1.12); }
+    h1 { margin: 0; font: 600 27px/1.14 system-ui, sans-serif; letter-spacing: -.045em; }.intro { margin: 9px 0 25px; color: #9eacbb; font-size: 14px; line-height: 1.5; }
+    #login-form { margin-top: 24px; }
+    .field { display: grid; gap: 8px; margin-top: 16px; } label, .options { color: #bfccd8; font: 500 12px/1.2 system-ui, sans-serif; }.input-wrap { position: relative; }
+    input[type="email"], input[type="password"], input[type="text"] { width: 100%; height: 48px; padding: 0 45px 0 14px; border: 1px solid rgba(180, 209, 233, .17); border-radius: 10px; outline: none; color: #f4fbff; background: rgba(255,255,255,.055); font: 400 15px system-ui, sans-serif; transition: .2s; } input::placeholder { color: #6f7e8c; } input:focus { border-color: rgba(116, 234, 233, .82); box-shadow: 0 0 0 3px rgba(103,232,237,.10), 0 0 22px rgba(168, 112, 255, .11); }
+    #email { padding-left: 48px; }
+    .location-flag { position: absolute; z-index: 1; left: 13px; top: 50%; display: grid; place-items: center; width: 23px; height: 23px; overflow: hidden; border: 1px solid rgba(205,230,255,.20); border-radius: 50%; color: #91a2b4; background: rgba(255,255,255,.07); box-shadow: 0 2px 9px rgba(0,0,0,.32); transform: translateY(-50%); font-size: 16px; line-height: 1; }
+    .toggle-password { position: absolute; top: 7px; right: 9px; height: 34px; border: 0; padding: 0 8px; color: #ace6eb; background: transparent; cursor: pointer; font: 500 12px system-ui, sans-serif; }
+    .options { display: flex; justify-content: space-between; align-items: center; margin: 17px 0 22px; }.remember { display: flex; align-items: center; gap: 8px; cursor: pointer; } input[type="checkbox"] { accent-color: #78ece8; } a { color: #84e7ed; text-decoration: none; } a:hover { text-decoration: underline; }
+    .submit { width: 100%; height: 50px; border: 0; border-radius: 10px; cursor: pointer; color: #061116; background: linear-gradient(105deg, #74e6e4, #a78cff); box-shadow: 0 9px 28px rgba(103, 194, 226, .23); font: 700 14px system-ui, sans-serif; transition: transform .2s, box-shadow .2s; }.submit:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(120, 137, 255, .36); }.submit:active { transform: translateY(0); }
+    .status { min-height: 18px; margin: 13px 0 0; text-align: center; color: #9aeccd; font-size: 13px; line-height: 1.4; }.signup { margin: 23px 0 0; color: #9eacbb; text-align: center; font-size: 13px; line-height: 1.4; }.version { margin: 22px 0 0; color: #687785; text-align: center; font-size: 11px; letter-spacing: .08em; }
+    .release-notes { display: grid; place-items: center; width: 28px; height: 28px; margin: 9px auto 0; border: 1px solid rgba(169, 198, 255, .15); border-radius: 50%; color: #8fbac8; transition: .2s; }.release-notes:hover, .release-notes:focus-visible { border-color: rgba(116,234,233,.7); color: #c6fbff; background: rgba(116,234,233,.08); box-shadow: 0 0 16px rgba(116,234,233,.13); outline: none; }.release-notes svg { width: 13px; height: 13px; }
+    .origami-stage { position: fixed; z-index: 8; inset: 0; pointer-events: none; perspective: 1100px; transform-style: preserve-3d; }
+    .origami-piece { position: fixed; margin: 0; overflow: hidden; clip-path: inset(var(--fold-from) 0 calc(100% - var(--fold-to)) 0); transform-origin: 50% var(--fold-origin); backface-visibility: visible; will-change: transform, opacity, filter; animation: origami-fold 1.75s cubic-bezier(.58,.02,.22,1) var(--fold-delay) both; }
+    .origami-piece:nth-child(even) { animation-name: origami-fold-reverse; }
+    body.origami-running .login-wrap > .login-card { visibility: hidden; }
+    @keyframes origami-fold { 0% { opacity: 1; transform: rotateX(0) translateZ(0) scale(1); filter: brightness(1); } 34% { transform: rotateX(-26deg) translateZ(12px) scale(.985); filter: brightness(.88); } 70% { opacity: 1; transform: rotateX(-82deg) translateZ(4px) scale(.76); filter: brightness(.52); } 100% { opacity: 0; transform: rotateX(-90deg) translateZ(-28px) scale(.08); filter: brightness(.12); } }
+    @keyframes origami-fold-reverse { 0% { opacity: 1; transform: rotateX(0) translateZ(0) scale(1); filter: brightness(1); } 34% { transform: rotateX(24deg) translateZ(10px) scale(.985); filter: brightness(.82); } 70% { opacity: 1; transform: rotateX(80deg) translateZ(2px) scale(.76); filter: brightness(.46); } 100% { opacity: 0; transform: rotateX(90deg) translateZ(-30px) scale(.08); filter: brightness(.10); } }
+    .miura-piece { position: fixed; margin: 0; overflow: hidden; clip-path: polygon(var(--p1), var(--p2), var(--p3), var(--p4)); transform-origin: center; backface-visibility: visible; will-change: transform, opacity, filter; animation: miura-fold 2.35s cubic-bezier(.66,.01,.18,1) var(--fold-delay) both; }
+    @keyframes miura-fold { 0% { opacity: 1; transform: translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale(1); filter: brightness(1); } 24% { transform: translate3d(var(--early-x), var(--early-y), 18px) rotateX(var(--early-rx)) rotateY(var(--early-ry)) rotateZ(var(--early-rz)) scale(.985); filter: brightness(var(--shade)); } 62% { opacity: 1; transform: translate3d(0,0,4px) rotateX(var(--mid-rx)) rotateY(var(--mid-ry)) rotateZ(var(--mid-rz)) scale(.46); filter: brightness(.62); } 84% { opacity: 1; transform: translate3d(0,0,-12px) rotateX(var(--early-rx)) rotateY(var(--early-ry)) rotateZ(var(--fold-z)) scale(.14,.20); filter: brightness(.48); } 94% { opacity: 1; transform: translate3d(0,0,-28px) rotateX(0) rotateY(0) rotateZ(45deg) scale(.045,.070); filter: brightness(.30); } 100% { opacity: 0; transform: translate3d(0,0,-42px) rotateX(0) rotateY(0) rotateZ(45deg) scale(.012,.020); filter: brightness(.08); } }
+    .globe-stage { position: fixed; z-index: 8; inset: 0; pointer-events: none; perspective: 1200px; transform-style: preserve-3d; }
+    .globe-core { position: fixed; z-index: 0; border: 1px solid rgba(123, 229, 237, .24); border-radius: 50%; opacity: 0; background: radial-gradient(circle at 32% 27%, rgba(178,235,255,.20), rgba(28,74,112,.16) 34%, rgba(3,10,23,.93) 74%); box-shadow: inset -28px -18px 48px rgba(0,0,0,.72), 0 0 44px rgba(88,174,222,.16); animation: globe-core-in 1.85s cubic-bezier(.55,.02,.16,1) both; }
+    .globe-core::before, .globe-core::after { content: ''; position: absolute; inset: 9% 24%; border: 1px solid rgba(141,225,239,.13); border-radius: 50%; }
+    .globe-core::after { inset: 42% 4%; }
+    .globe-slice { position: fixed; z-index: 1; overflow: hidden; transform-origin: center; backface-visibility: visible; will-change: transform, filter; animation: globe-wrap 1.85s cubic-bezier(.62,.01,.18,1) var(--slice-delay) both; }
+    .globe-slice > .login-card { position: absolute; margin: 0; max-width: none; box-shadow: none; }
+    .globe-surface { position: fixed; z-index: 3; overflow: hidden; border-radius: 50%; opacity: 0; pointer-events: none; animation: globe-surface-in .38s ease 1.72s both; box-shadow: inset 18px 0 34px rgba(134,229,248,.06), inset -34px -8px 52px rgba(0,0,0,.66); }
+    .globe-grid { position: absolute; inset: -8%; border-radius: 50%; opacity: .34; background: repeating-radial-gradient(ellipse at center, transparent 0 16%, rgba(130,232,241,.11) 16.5% 17%, transparent 17.5% 28%), repeating-linear-gradient(90deg, transparent 0 15%, rgba(130,232,241,.075) 15.5% 16%, transparent 16.5% 30%); will-change: transform, filter; }
+    .data-orbit { position: absolute; z-index: 2; left: 0; top: 0; opacity: 0; pointer-events: none; color: #c9fdff; text-shadow: 0 0 6px rgba(108,236,245,.92), 0 0 15px rgba(92,135,255,.48); font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; will-change: transform, opacity, filter; }
+    .speed-field { position: fixed; z-index: 2; pointer-events: none; opacity: 0; will-change: transform, opacity, filter; }
+    .speed-ring { position: absolute; inset: var(--ring-inset); border: 1px solid rgba(111,231,239,var(--ring-alpha)); border-right-color: transparent; border-left-color: transparent; border-radius: 50%; transform: rotate(var(--ring-angle)) scaleY(var(--ring-squash)); box-shadow: 0 0 14px rgba(91,191,237,.10); }
+    .speed-streak { position: absolute; left: 50%; top: 50%; width: var(--streak-length); height: 1px; opacity: var(--streak-alpha); background: linear-gradient(90deg, rgba(111,235,242,0), rgba(151,241,247,.62), rgba(111,235,242,0)); transform-origin: 0 50%; transform: rotate(var(--streak-angle)) translateX(var(--streak-distance)); filter: blur(.25px); }
+    .globe-stage.formed .globe-slice { opacity: .52; transition: opacity .48s ease; }
+    body.globe-running .login-wrap > .login-card { visibility: hidden; }
+    @keyframes globe-core-in { 0%, 42% { opacity: 0; transform: scale(.18) rotate(-14deg); } 72% { opacity: .88; transform: scale(1.05) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+    @keyframes globe-surface-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes globe-wrap { 0% { transform: translate3d(0,0,0) rotateY(0) scale(1); filter: brightness(1); } 36% { transform: translate3d(var(--early-x),var(--early-y),16px) rotateY(var(--early-rotation)) scale(var(--early-scale-x),var(--early-scale-y)); filter: brightness(var(--slice-light)); } 74% { transform: translate3d(var(--target-x),var(--target-y),var(--target-z)) rotateY(var(--slice-rotation)) scale(var(--scale-x),var(--scale-y)); filter: brightness(var(--slice-light)); } 100% { transform: translate3d(var(--target-x),var(--target-y),var(--target-z)) rotateY(var(--slice-rotation)) scale(var(--scale-x),var(--scale-y)); filter: brightness(var(--slice-light)); } }
+    .liquid-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .melt-stage { position: fixed; z-index: 9; inset: 0; overflow: hidden; pointer-events: none; filter: url(#liquid-distortion); }
+    .melt-strip { position: fixed; overflow: hidden; border-radius: 0 0 var(--liquid-round) var(--liquid-round); transform-origin: 50% 4%; will-change: transform, opacity, filter; animation: melt-strip 3.45s cubic-bezier(.48,.01,.20,1) var(--melt-delay) both; }
+    .melt-strip > .login-card { position: absolute; margin: 0; max-width: none; box-shadow: none; }
+    .melt-drop { position: fixed; border-radius: 45% 55% 62% 38% / 38% 42% 58% 62%; opacity: 0; background: linear-gradient(145deg, rgba(177,234,255,.34), rgba(18,39,72,.86) 48%, rgba(6,9,20,.96)); box-shadow: inset 2px 2px 5px rgba(230,250,255,.20), 0 0 13px rgba(101,194,238,.14); will-change: transform, opacity, filter; animation: melt-drop 2.25s cubic-bezier(.38,.02,.72,1) var(--drop-delay) both; }
+    .melt-sheen { position: fixed; border-radius: 20px; opacity: 0; background: linear-gradient(180deg, transparent 0 58%, rgba(127,224,239,.10) 76%, rgba(177,238,255,.28) 98%, transparent); mix-blend-mode: screen; animation: melt-sheen 1.35s ease-out both; }
+    body.melt-running .login-wrap > .login-card { visibility: hidden; }
+    @keyframes melt-strip { 0%, 10% { opacity: 1; transform: translate3d(0,0,0) rotate(0) skewX(0) scale(1); filter: brightness(1) blur(0); } 31% { transform: translate3d(var(--sway-a),7px,0) rotate(var(--bend-a)) skewX(var(--skew-a)) scaleX(1.015) scaleY(1.04); filter: brightness(.96) blur(0); } 59% { opacity: 1; transform: translate3d(var(--sway-b),var(--mid-y),0) rotate(var(--bend-b)) skewX(var(--skew-b)) scaleX(var(--mid-width)) scaleY(var(--stretch)); filter: brightness(.76) saturate(1.20) blur(.22px); } 82% { opacity: .92; transform: translate3d(var(--sway-c),var(--end-y),0) rotate(var(--bend-c)) skewX(var(--skew-c)) scaleX(.58) scaleY(var(--end-stretch)); filter: brightness(.53) saturate(1.32) blur(.72px); } 100% { opacity: 0; transform: translate3d(var(--sway-d),var(--exit-y),0) rotate(var(--bend-d)) skewX(var(--skew-d)) scaleX(.20) scaleY(var(--exit-stretch)); filter: brightness(.22) blur(2.6px); } }
+    @keyframes melt-drop { 0%, 20% { opacity: 0; transform: translate3d(0,-8px,0) scale(.45,.20) rotate(0); } 34% { opacity: .92; transform: translate3d(0,0,0) scale(.72,1.08) rotate(var(--drop-rotate)); } 82% { opacity: .86; transform: translate3d(var(--drop-drift),var(--drop-fall),0) scale(.64,1.28) rotate(var(--drop-rotate)); filter: blur(.25px); } 100% { opacity: 0; transform: translate3d(var(--drop-drift),var(--drop-exit),0) scale(.34,1.5) rotate(var(--drop-rotate)); filter: blur(2px); } }
+    @keyframes melt-sheen { 0% { opacity: 0; transform: translateY(-8px); } 28% { opacity: .78; } 100% { opacity: 0; transform: translateY(76%); } }
+    @media (max-width: 460px) { .login-wrap { padding: 16px; }.login-card { padding: 29px 23px; border-radius: 16px; }.brand-name { font-size: 24px; }.brand { height: 72px; }.brand img { width: 120px; height:72px; } h1 { font-size: 25px; } }
+    @media (prefers-reduced-motion: reduce) { .veil { background: rgba(2,3,7,.72); } }
+  </style>
+</head>
+<body>
+  <svg class="liquid-filters" aria-hidden="true" focusable="false">
+    <filter id="liquid-distortion" x="-20%" y="-20%" width="140%" height="170%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".006 .024" numOctaves="2" seed="17" result="liquid-noise">
+        <animate attributeName="baseFrequency" values=".006 .024;.010 .036;.005 .021" dur="3.6s" repeatCount="1" fill="freeze" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="liquid-noise" scale="0" xChannelSelector="R" yChannelSelector="B">
+        <animate attributeName="scale" values="0;3;9;17;25" keyTimes="0;.18;.43;.72;1" dur="3.6s" repeatCount="1" fill="freeze" />
+      </feDisplacementMap>
+    </filter>
+  </svg>
+  <canvas id="universe" aria-label="Animated plasma universe with a slowly changing realistic Moon"></canvas>
+  <canvas id="orbit-foreground" aria-hidden="true"></canvas>
+  <div class="orbiter-label" id="orbiter-label" role="tooltip"><span></span><small><span id="orbiter-distance"></span> from Earth</small></div>
+  <div class="veil"></div>
+  <main class="login-wrap">
+    <section class="login-card" aria-labelledby="login-title">
+      <p class="brand-name">COMMUNIQUE 7</p>
+      <div class="brand"><img src="communique-logo-336.webp" alt="Communique" /></div>
+      <h1 id="login-title">Welcome back</h1>
+      <form id="login-form" novalidate>
+        <div class="field"><label for="email">User or Email</label><div class="input-wrap"><span class="location-flag" id="location-flag" role="img" aria-label="Detecting location" title="Detecting location">·</span><input id="email" name="email" type="text" autocomplete="username" placeholder="User or email" required /></div></div>
+        <div class="field"><label for="password">Password</label><div class="input-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required minlength="6" /><button class="toggle-password" type="button" aria-label="Show password">Show</button></div></div>
+        <div class="options"><label class="remember"><input type="checkbox" name="remember" /> Remember me</label><a href="#recover">Forgot password?</a></div>
+        <button class="submit" type="submit">Sign in</button><p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="signup">Don't have an account? <a href="#signup">Request an account</a></p>
+      <p class="version">VERSION 1.3</p>
+      <a class="release-notes" href="release-notes.html" aria-label="View what's new" title="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.75a6.75 6.75 0 0 1 6.75 6.75c0 7.75 2.5 8.75 2.5 8.75H2.75s2.5-1 2.5-8.75A6.75 6.75 0 0 1 12 2.75Z"/><path d="M9.5 21.25h5"/></svg></a>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector('#universe');
+      const ctx = canvas.getContext('2d');
+      const orbitForeground = document.querySelector('#orbit-foreground');
+      const orbitCtx = orbitForeground.getContext('2d');
+      const orbiterLabel = document.querySelector('#orbiter-label');
+      const orbiterLabelName = orbiterLabel.querySelector('span');
+      const orbiterLabelDistance = document.querySelector('#orbiter-distance');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const moonImage = new Image();
+      moonImage.src = 'nasa-moon.webp';
+      const moonCycleSeconds = 2 * 60;
+      const moonRotationSeconds = 75;
+      const brightStars = [
+        { name: 'Sirius', distance: '8.6 light-years' },
+        { name: 'Procyon', distance: '11.4 light-years' },
+        { name: 'Altair', distance: '16.8 light-years' },
+        { name: 'Vega', distance: '25.3 light-years' },
+        { name: 'Arcturus', distance: '37 light-years' },
+        { name: 'Capella', distance: '42 light-years' },
+        { name: 'Aldebaran', distance: '65 light-years' },
+        { name: 'Canopus', distance: '313 light-years' }
+      ];
+      const moonPhases = [
+        { name: 'New Moon', angle: 0 },
+        { name: 'Waxing crescent', angle: Math.PI * .25 },
+        { name: 'First quarter', angle: Math.PI * .5 },
+        { name: 'Waxing gibbous', angle: Math.PI * .75 },
+        { name: 'Full Moon', angle: Math.PI },
+        { name: 'Waning gibbous', angle: Math.PI * 1.25 },
+        { name: 'Last quarter', angle: Math.PI * 1.5 },
+        { name: 'Waning crescent', angle: Math.PI * 1.75 },
+        { name: 'Balsamic Moon', angle: Math.PI * 1.875 }
+      ];
+      const phaseSeed = crypto.getRandomValues(new Uint32Array(1))[0] % moonPhases.length;
+      const moonStartAngle = moonPhases[phaseSeed].angle;
+      const moonPlacementSeed = crypto.getRandomValues(new Uint32Array(2));
+      const orbiterNameSeed = crypto.getRandomValues(new Uint32Array(1))[0];
+      let previousStar = -1;
+      try { const storedStar = localStorage.getItem('communique-last-orbiter-star'); if (storedStar !== null) previousStar = Number(storedStar); } catch (_) {}
+      let starIndex = orbiterNameSeed % (brightStars.length - 1);
+      if (Number.isInteger(previousStar) && previousStar >= 0 && previousStar < brightStars.length && starIndex >= previousStar) starIndex++;
+      const selectedStar = brightStars[starIndex];
+      try { localStorage.setItem('communique-last-orbiter-star', String(starIndex)); } catch (_) {}
+      orbiterLabelName.textContent = selectedStar.name;
+      orbiterLabelDistance.textContent = selectedStar.distance;
+      const moonPlacement = {
+        edge: ['top', 'right', 'bottom', 'left'][moonPlacementSeed[0] % 4],
+        along: .18 + (moonPlacementSeed[1] / 0xffffffff) * .64,
+        overlap: .08 + ((moonPlacementSeed[0] >>> 8) % 1000) / 1000 * .28
+      };
+      const pointer = { x: .5, y: .5 }, pointerTarget = { x: .5, y: .5 }, hoverPointer = { clientX: -999, clientY: -999 };
+      let width, height, dpr, particles, blobs, sparks, filaments, galaxyClouds, meteors, orbiter, orbiterHit = null, filamentSteps, animationTime = 0, lastFrame = 0;
+      const colors = [[72, 124, 234], [110, 165, 255], [167, 205, 255], [222, 236, 255]];
+      const random = (min, max) => min + Math.random() * (max - min);
+      const rgba = (rgb, a) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a})`;
+
+      function resize() {
+        dpr = Math.min(devicePixelRatio || 1, 2); width = innerWidth; height = innerHeight;
+        canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        orbitForeground.width = Math.round(width * dpr); orbitForeground.height = Math.round(height * dpr); orbitCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const physicalPixels = width * height * dpr * dpr;
+        const detail = physicalPixels > 6000000 ? .50 : physicalPixels > 3200000 ? .68 : 1;
+        const amount = Math.max(85, Math.round(Math.max(95, Math.min(180, width * height / 10500)) * detail));
+        particles = Array.from({ length: amount }, () => ({ angle: random(0, Math.PI * 2), radius: random(.05, 1.16), drift: random(.006, .024) * (Math.random() < .5 ? -1 : 1), pulse: random(0, Math.PI * 2), size: random(.25, 1.25), color: colors[Math.floor(random(0, colors.length))] }));
+        blobs = Array.from({ length: Math.round(6 + detail * 3) }, (_, i) => ({ angle: random(0, Math.PI * 2), radius: random(.10, .92), spread: random(.26, .54), phase: random(0, Math.PI * 2), rate: random(.008, .028) * (i % 2 ? -1 : 1), color: colors[Math.floor(random(0, 3))] }));
+        sparks = Array.from({ length: Math.max(12, Math.round(amount * .16)) }, () => ({ angle: random(0, Math.PI * 2), radius: random(.18, 1.28), speed: random(.014, .043) * (Math.random() < .5 ? -1 : 1), phase: random(0, Math.PI * 2), size: random(.55, 1.85) }));
+        filaments = Array.from({ length: Math.round(7 + detail * 3) }, (_, i) => ({ radius: random(.44, 1.08), squash: random(.43, .91), tilt: random(0, Math.PI), rate: random(.006, .025) * (i % 2 ? -1 : 1), phase: random(0, Math.PI * 2), alpha: random(.07, .20), width: random(.45, 1.25), color: colors[Math.floor(random(0, colors.length))] }));
+        filamentSteps = Math.round(66 + detail * 30);
+        galaxyClouds = Array.from({ length: 4 }, (_, i) => ({ x: i < 2 ? random(-.05, .26) : random(.74, 1.05), y: random(.04, .96), radius: random(.20, .39), squash: random(.28, .68), angle: random(-.8, .8), phase: random(0, Math.PI * 2), rate: random(.004, .012) * (i % 2 ? -1 : 1), color: [[47, 84, 180], [63, 108, 214], [82, 93, 184]][i % 3] }));
+        meteors = [{ active: false, next: random(16, 36) }];
+        orbiter = { radiusX: width * .50, radiusY: Math.max(height * .29, 175), tilt: -.18, phase: random(0, Math.PI * 2), speed: .043 };
+      }
+
+      function drawGalaxyClouds(t) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        galaxyClouds.forEach(cloud => {
+          const r = Math.max(width, height) * cloud.radius;
+          const x = width * cloud.x + Math.sin(t * cloud.rate + cloud.phase) * 26;
+          const y = height * cloud.y + Math.cos(t * cloud.rate * .8 + cloud.phase) * 18;
+          ctx.save(); ctx.translate(x, y); ctx.rotate(cloud.angle + Math.sin(t * .04 + cloud.phase) * .06); ctx.scale(1, cloud.squash);
+          const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+          glow.addColorStop(0, rgba(cloud.color, .135)); glow.addColorStop(.32, rgba(cloud.color, .065)); glow.addColorStop(.72, rgba(cloud.color, .015)); glow.addColorStop(1, rgba(cloud.color, 0));
+          ctx.fillStyle = glow; ctx.fillRect(-r, -r, r * 2, r * 2); ctx.restore();
+        });
+        ctx.restore();
+      }
+
+      function drawPlasma(t) {
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const r = Math.max(215, Math.min(width, height) * .42);
+        const base = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(width, height) * .72);
+        base.addColorStop(0, '#0b1732'); base.addColorStop(.32, '#071127'); base.addColorStop(.72, '#030711'); base.addColorStop(1, '#020307'); ctx.fillStyle = base; ctx.fillRect(0, 0, width, height);
+        drawGalaxyClouds(t);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        blobs.forEach(blob => {
+          const a = blob.angle + t * blob.rate;
+          const orbit = blob.radius * r * (1 + Math.sin(t * .10 + blob.phase) * .10);
+          const x = cx + Math.cos(a) * orbit * 1.04;
+          const y = cy + Math.sin(a) * orbit * .72;
+          const cloud = r * blob.spread * (1 + Math.sin(t * .19 + blob.phase) * .11);
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, cloud);
+          gradient.addColorStop(0, rgba(blob.color, .105)); gradient.addColorStop(.35, rgba(blob.color, .040)); gradient.addColorStop(1, rgba(blob.color, 0)); ctx.fillStyle = gradient; ctx.fillRect(x-cloud, y-cloud, cloud*2, cloud*2);
+        });
+        const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * .57);
+        core.addColorStop(0, 'rgba(224, 239, 255, .23)'); core.addColorStop(.16, 'rgba(145, 193, 255, .15)'); core.addColorStop(.55, 'rgba(63, 121, 232, .055)'); core.addColorStop(1, 'rgba(42, 92, 190, 0)'); ctx.fillStyle = core; ctx.fillRect(cx-r*.6, cy-r*.6, r*1.2, r*1.2);
+        ctx.restore();
+      }
+
+      function traceMoonlightMask(x, y, radius, phase, terminatorShift = 0) {
+        const samples = 72;
+        const waxing = phase <= Math.PI;
+        const coefficient = Math.max(-1, Math.min(1, waxing ? Math.cos(phase) + terminatorShift : -Math.cos(phase) - terminatorShift));
+        ctx.beginPath();
+        for (let index = 0; index <= samples; index++) {
+          const localY = -radius + radius * 2 * index / samples;
+          const limb = Math.sqrt(Math.max(0, radius * radius - localY * localY));
+          const terminator = coefficient * limb;
+          const localX = waxing ? terminator : -limb;
+          index ? ctx.lineTo(x + localX, y + localY) : ctx.moveTo(x + localX, y + localY);
+        }
+        for (let index = samples; index >= 0; index--) {
+          const localY = -radius + radius * 2 * index / samples;
+          const limb = Math.sqrt(Math.max(0, radius * radius - localY * localY));
+          const localX = waxing ? limb : coefficient * limb;
+          ctx.lineTo(x + localX, y + localY);
+        }
+        ctx.closePath();
+      }
+
+      function drawMoon(t) {
+        if (!moonImage.complete || !moonImage.naturalWidth) return;
+        const phase = (moonStartAngle + (reducedMotion ? 0 : t / moonCycleSeconds * Math.PI * 2)) % (Math.PI * 2);
+        const radius = Math.max(48, Math.min(94, Math.min(width, height) * .092));
+        const card = document.querySelector('.login-card').getBoundingClientRect();
+        const edgeInset = radius * moonPlacement.overlap;
+        let x;
+        let y;
+        if (moonPlacement.edge === 'top' || moonPlacement.edge === 'bottom') {
+          x = card.left + card.width * moonPlacement.along;
+          y = moonPlacement.edge === 'top' ? card.top - radius + edgeInset : card.bottom + radius - edgeInset;
+        } else {
+          x = moonPlacement.edge === 'left' ? card.left - radius + edgeInset : card.right + radius - edgeInset;
+          y = card.top + card.height * moonPlacement.along;
+        }
+        x = Math.max(radius * .72, Math.min(width - radius * .72, x + (pointer.x - .5) * 5));
+        y = Math.max(radius * .72, Math.min(height - radius * .72, y + (pointer.y - .5) * 4));
+        const finalX = x;
+        const finalY = y;
+        let startX = finalX;
+        let startY = finalY;
+        if (moonPlacement.edge === 'top') startY = card.top + radius * 1.18;
+        if (moonPlacement.edge === 'bottom') startY = card.bottom - radius * 1.18;
+        if (moonPlacement.edge === 'left') startX = card.left + radius * 1.18;
+        if (moonPlacement.edge === 'right') startX = card.right - radius * 1.18;
+        const entranceProgress = reducedMotion ? 1 : Math.min(1, t / 7);
+        const entranceEase = entranceProgress * entranceProgress * (3 - 2 * entranceProgress);
+        x = startX + (finalX - startX) * entranceEase;
+        y = startY + (finalY - startY) * entranceEase;
+        const imageSize = radius * 2.30;
+        const moonFade = 1;
+        const surfaceTurn = reducedMotion ? moonStartAngle : t / moonRotationSeconds * Math.PI * 2;
+        const surfaceShift = Math.sin(surfaceTurn) * radius * .08;
+        const surfaceScaleX = .94 + Math.abs(Math.cos(surfaceTurn)) * .06;
+        const axialRotation = Math.sin(surfaceTurn) * .075;
+
+        ctx.save();
+        ctx.fillStyle = '#010207';
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+
+        ctx.save();
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.clip();
+        ctx.globalAlpha = .94;
+        ctx.filter = 'brightness(.19) saturate(.52) contrast(1.22)';
+        ctx.translate(x + surfaceShift, y); ctx.rotate(axialRotation); ctx.scale(surfaceScaleX, 1);
+        ctx.drawImage(moonImage, -imageSize / 2, -imageSize / 2, imageSize, imageSize);
+        ctx.restore();
+
+        const featherLayers = 40;
+        for (let layer = 0; layer < featherLayers; layer++) {
+          const normalized = layer / (featherLayers - 1);
+          const shift = -.22 + normalized * .44;
+          ctx.save();
+          traceMoonlightMask(x, y, radius, phase, shift);
+          ctx.clip();
+          ctx.globalAlpha = .029 * moonFade;
+          ctx.filter = 'brightness(1.08) saturate(.72) contrast(1.10)';
+          ctx.translate(x + surfaceShift, y); ctx.rotate(axialRotation); ctx.scale(surfaceScaleX, 1);
+          ctx.drawImage(moonImage, -imageSize / 2, -imageSize / 2, imageSize, imageSize);
+          ctx.restore();
+        }
+
+        const edge = ctx.createRadialGradient(x - radius * .18, y - radius * .20, radius * .18, x, y, radius);
+        edge.addColorStop(.58, 'rgba(210, 229, 246, 0)');
+        edge.addColorStop(.88, 'rgba(7, 12, 23, .10)');
+        edge.addColorStop(1, 'rgba(0, 2, 8, .58)');
+        ctx.globalAlpha = moonFade;
+        ctx.fillStyle = edge; ctx.beginPath(); ctx.arc(x, y, radius * .998, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawFilaments(t) {
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const baseR = Math.max(215, Math.min(width, height) * .42);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        filaments.forEach(filament => {
+          const rotation = filament.tilt + t * filament.rate;
+          const cosR = Math.cos(rotation), sinR = Math.sin(rotation);
+          ctx.beginPath();
+          for (let i = 0; i <= filamentSteps; i++) {
+            const theta = i / filamentSteps * Math.PI * 2;
+            const wobble = 1 + Math.sin(theta * 3 + t * .17 + filament.phase) * .095 + Math.sin(theta * 7 - t * .11 + filament.phase) * .035;
+            const x0 = Math.cos(theta) * baseR * filament.radius * wobble;
+            const y0 = Math.sin(theta) * baseR * filament.radius * filament.squash * wobble;
+            const x = cx + (x0 * cosR - y0 * sinR) * 1.18;
+            const y = cy + x0 * sinR + y0 * cosR;
+            i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
+          ctx.strokeStyle = rgba(filament.color, filament.alpha); ctx.lineWidth = filament.width; ctx.shadowColor = rgba(filament.color, .30); ctx.shadowBlur = 4; ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      function drawParticles(t) {
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const baseR = Math.max(215, Math.min(width, height) * .42);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        particles.forEach(p => {
+          const angle = p.angle + t * p.drift + Math.sin(t * .15 + p.pulse) * .17;
+          const radius = baseR * p.radius * (1 + Math.sin(t * .23 + p.pulse) * .055);
+          const x = cx + Math.cos(angle) * radius * (1 + Math.sin(angle * 4 + p.pulse) * .05);
+          const y = cy + Math.sin(angle) * radius * .76;
+          const alpha = (.10 + (1 - Math.min(1, p.radius)) * .33) * (.65 + Math.sin(t * .55 + p.pulse) * .35);
+          ctx.fillStyle = rgba(p.color, alpha); ctx.beginPath(); ctx.arc(x, y, p.size, 0, Math.PI * 2); ctx.fill();
+        });
+        sparks.forEach(spark => {
+          const angle = spark.angle + t * spark.speed;
+          const radius = baseR * spark.radius * (1 + Math.sin(t * .24 + spark.phase) * .06);
+          const x = cx + Math.cos(angle) * radius; const y = cy + Math.sin(angle) * radius * .76;
+          const glow = .18 + Math.max(0, Math.sin(t * .72 + spark.phase)) * .65;
+          ctx.shadowColor = 'rgba(230,242,255,.75)'; ctx.shadowBlur = 4 + spark.size * 2; ctx.fillStyle = `rgba(235,246,255,${glow})`; ctx.beginPath(); ctx.arc(x, y, spark.size, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function launchMeteor(meteor, t) {
+        const fromTop = Math.random() < .55;
+        meteor.x = fromTop ? random(-width * .12, width * 1.12) : (Math.random() < .5 ? -70 : width + 70);
+        meteor.y = fromTop ? -70 : random(height * .05, height * .78);
+        meteor.dx = fromTop ? random(-width * .30, width * .30) : (meteor.x < 0 ? width * random(.75, 1.25) : -width * random(.75, 1.25));
+        meteor.dy = fromTop ? height * random(.72, 1.10) : height * random(.20, .54);
+        meteor.duration = random(2.8, 4.4); meteor.start = t; meteor.active = true;
+        meteor.color = Math.random() < .7 ? [188, 221, 255] : [132, 174, 255];
+      }
+
+      function drawMeteors(t) {
+        if (reducedMotion) return;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+        meteors.forEach(meteor => {
+          if (!meteor.active && t >= meteor.next) launchMeteor(meteor, t);
+          if (!meteor.active) return;
+          const progress = (t - meteor.start) / meteor.duration;
+          if (progress >= 1) { meteor.active = false; meteor.next = t + random(30, 55); return; }
+          const x = meteor.x + meteor.dx * progress, y = meteor.y + meteor.dy * progress;
+          const tail = Math.min(1, progress * 4, (1 - progress) * 5);
+          const tx = x - meteor.dx * .115, ty = y - meteor.dy * .115;
+          const trail = ctx.createLinearGradient(tx, ty, x, y);
+          trail.addColorStop(0, rgba(meteor.color, 0)); trail.addColorStop(.58, rgba(meteor.color, .06 * tail)); trail.addColorStop(1, rgba([238, 247, 255], .84 * tail));
+          ctx.strokeStyle = trail; ctx.lineWidth = 1.4 + tail * 1.4; ctx.shadowColor = rgba(meteor.color, .70); ctx.shadowBlur = 12; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+          ctx.fillStyle = rgba([244, 250, 255], .78 * tail); ctx.beginPath(); ctx.arc(x, y, 1.15 + tail * 1.35, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function orbitPoint(t) {
+        const theta = orbiter.phase + t * orbiter.speed;
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const x0 = Math.cos(theta) * orbiter.radiusX, y0 = Math.sin(theta) * orbiter.radiusY;
+        const cosTilt = Math.cos(orbiter.tilt), sinTilt = Math.sin(orbiter.tilt);
+        return { x: cx + x0 * cosTilt - y0 * sinTilt, y: cy + x0 * sinTilt + y0 * cosTilt, depth: (Math.sin(theta) + 1) * .5 };
+      }
+
+      function drawOrbiter(target, head, tail, pulse, brightness) {
+        const trail = target.createLinearGradient(tail.x, tail.y, head.x, head.y);
+        trail.addColorStop(0, 'rgba(255, 139, 71, 0)');
+        trail.addColorStop(.42, `rgba(255, 166, 82, ${.025 * brightness})`);
+        trail.addColorStop(.78, `rgba(255, 185, 108, ${.12 * brightness})`);
+        trail.addColorStop(1, `rgba(255, 221, 169, ${.47 * brightness})`);
+        target.save(); target.globalCompositeOperation = 'lighter'; target.lineCap = 'round'; target.strokeStyle = trail; target.lineWidth = 1.15 + head.depth * .7; target.shadowColor = 'rgba(255, 137, 70, .60)'; target.shadowBlur = 9;
+        target.beginPath(); target.moveTo(tail.x, tail.y); target.lineTo(head.x, head.y); target.stroke();
+        const halo = target.createRadialGradient(head.x, head.y, 0, head.x, head.y, 23 + head.depth * 9);
+        halo.addColorStop(0, `rgba(255, 248, 231, ${.76 * pulse * brightness})`);
+        halo.addColorStop(.13, `rgba(255, 195, 119, ${.38 * pulse * brightness})`);
+        halo.addColorStop(.48, `rgba(255, 118, 57, ${.10 * pulse * brightness})`);
+        halo.addColorStop(1, 'rgba(255, 89, 43, 0)');
+        target.fillStyle = halo; target.fillRect(head.x - 34, head.y - 34, 68, 68);
+        target.fillStyle = `rgba(255, 246, 224, ${.88 * brightness})`; target.beginPath(); target.arc(head.x, head.y, 1.8 + head.depth * 1.1, 0, Math.PI * 2); target.fill();
+        target.restore();
+      }
+
+      function drawHiddenOrbit(t) {
+        if (reducedMotion) return;
+        const head = orbitPoint(t), tail = orbitPoint(t - 1.35);
+        orbiterHit = head;
+        const pulse = .72 + Math.sin(t * 1.12) * .16 + Math.sin(t * .47) * .08;
+        const brightness = .45 + head.depth * .55;
+        drawOrbiter(head.depth >= .5 ? orbitCtx : ctx, head, tail, pulse, brightness);
+      }
+
+      function updateOrbiterRollover(event) {
+        if (!orbiterHit || reducedMotion) return;
+        const distance = Math.hypot(event.clientX - orbiterHit.x, event.clientY - orbiterHit.y);
+        const visible = distance <= 34;
+        orbiterLabel.classList.toggle('visible', visible);
+        orbiterLabel.style.left = `${Math.min(width - 132, Math.max(8, orbiterHit.x))}px`;
+        orbiterLabel.style.top = `${Math.min(height - 28, Math.max(28, orbiterHit.y))}px`;
+      }
+
+      function draw(ms) {
+        if (!lastFrame) lastFrame = ms;
+        const delta = Math.min((ms - lastFrame) / 1000, 1 / 30); lastFrame = ms;
+        if (!reducedMotion) animationTime += delta;
+        const pointerEase = 1 - Math.pow(.965, delta * 60);
+        pointer.x += (pointerTarget.x - pointer.x) * pointerEase; pointer.y += (pointerTarget.y - pointer.y) * pointerEase;
+        orbitCtx.clearRect(0, 0, width, height);
+        drawPlasma(animationTime); drawMoon(animationTime); drawFilaments(animationTime); drawParticles(animationTime); drawMeteors(animationTime); drawHiddenOrbit(animationTime); updateOrbiterRollover(hoverPointer); requestAnimationFrame(draw);
+      }
+      addEventListener('resize', resize, { passive: true }); addEventListener('pointermove', event => { hoverPointer.clientX = event.clientX; hoverPointer.clientY = event.clientY; pointerTarget.x = event.clientX / width; pointerTarget.y = event.clientY / height; }, { passive: true });
+      addEventListener('pointerleave', () => { hoverPointer.clientX = -999; hoverPointer.clientY = -999; orbiterLabel.classList.remove('visible'); }, { passive: true });
+      resize(); requestAnimationFrame(draw);
+    })();
+    (() => {
+      const flag = document.querySelector('#location-flag');
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const timezoneCountries = {
+        'Asia/Taipei': 'TW', 'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Shanghai': 'CN', 'Asia/Hong_Kong': 'HK', 'Asia/Singapore': 'SG', 'Asia/Bangkok': 'TH', 'Asia/Ho_Chi_Minh': 'VN', 'Asia/Jakarta': 'ID', 'Asia/Kolkata': 'IN', 'Asia/Dubai': 'AE',
+        'Europe/London': 'GB', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE', 'Europe/Rome': 'IT', 'Europe/Madrid': 'ES', 'Europe/Lisbon': 'PT',
+        'America/New_York': 'US', 'America/Chicago': 'US', 'America/Denver': 'US', 'America/Los_Angeles': 'US', 'America/Toronto': 'CA', 'America/Vancouver': 'CA', 'America/Sao_Paulo': 'BR', 'America/Mexico_City': 'MX',
+        'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ'
+      };
+      const countryFlag = code => code && code.length === 2
+        ? [...code.toUpperCase()].map(letter => String.fromCodePoint(127397 + letter.charCodeAt(0))).join('')
+        : '◎';
+      const countryName = code => {
+        try { return new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' }).of(code); }
+        catch (_) { return code; }
+      };
+      function showLocation(code, ipTimezone, source) {
+        const safeCode = /^[A-Z]{2}$/.test(code || '') ? code : null;
+        flag.textContent = countryFlag(safeCode);
+        const locationName = safeCode ? countryName(safeCode) : 'Location unavailable';
+        const timezoneText = ipTimezone && ipTimezone !== browserTimezone ? `${browserTimezone} · IP: ${ipTimezone}` : browserTimezone;
+        flag.setAttribute('aria-label', `${locationName}, ${timezoneText}`);
+        flag.title = `${locationName} · ${timezoneText} · ${source}`;
+      }
+
+      const fallbackCountry = timezoneCountries[browserTimezone] || null;
+      showLocation(fallbackCountry, browserTimezone, 'Timezone');
+
+      let cachedLocation = null;
+      try { cachedLocation = JSON.parse(sessionStorage.getItem('communique-ip-location')); } catch (_) {}
+      if (cachedLocation?.country_code) {
+        showLocation(cachedLocation.country_code, cachedLocation.timezone, 'IP + timezone');
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2800);
+      fetch('https://ipapi.co/json/', { signal: controller.signal })
+        .then(response => response.ok ? response.json() : Promise.reject(new Error('Location lookup failed')))
+        .then(location => {
+          if (!location.country_code) return;
+          showLocation(location.country_code, location.timezone, 'IP + timezone');
+          try { sessionStorage.setItem('communique-ip-location', JSON.stringify({ country_code: location.country_code, timezone: location.timezone })); } catch (_) {}
+        })
+        .catch(() => {})
+        .finally(() => clearTimeout(timeout));
+    })();
+    const form = document.querySelector('#login-form'); const password = document.querySelector('#password'); const toggle = document.querySelector('.toggle-password'); const status = document.querySelector('#status');
+    toggle.addEventListener('click', () => { const visible = password.type === 'text'; password.type = visible ? 'password' : 'text'; toggle.textContent = visible ? 'Show' : 'Hide'; toggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password'); });
+    function runGlobeWrap() {
+      const card = document.querySelector('.login-card');
+      const rect = card.getBoundingClientRect();
+      const stage = document.createElement('div');
+      stage.className = 'globe-stage';
+      const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      const radius = Math.min(142, rect.width * .37, innerHeight * .22);
+      const core = document.createElement('div');
+      core.className = 'globe-core';
+      core.style.left = `${center.x - radius}px`;
+      core.style.top = `${center.y - radius}px`;
+      core.style.width = `${radius * 2}px`;
+      core.style.height = `${radius * 2}px`;
+      stage.appendChild(core);
+
+      const slices = 18;
+      const sourceWidth = rect.width / slices;
+      const globeWidth = radius * 2 / slices;
+      for (let index = 0; index < slices; index++) {
+        const longitude = -Math.PI / 2 + (index + .5) / slices * Math.PI;
+        const projectedX = Math.sin(longitude) * radius;
+        const halfHeight = Math.sqrt(Math.max(0, radius * radius - projectedX * projectedX));
+        const targetCenterX = center.x + projectedX;
+        const targetCenterY = center.y;
+        const sourceCenterX = rect.left + (index + .5) * sourceWidth;
+        const sourceCenterY = center.y;
+        const targetX = targetCenterX - sourceCenterX;
+        const targetY = targetCenterY - sourceCenterY;
+        const rotation = longitude * 180 / Math.PI * .72;
+        const scaleX = globeWidth / sourceWidth * (.84 + Math.cos(longitude) * .18);
+        const scaleY = halfHeight * 2 / rect.height;
+
+        const slice = document.createElement('div');
+        slice.className = 'globe-slice';
+        slice.style.left = `${rect.left + index * sourceWidth}px`;
+        slice.style.top = `${rect.top}px`;
+        slice.style.width = `${sourceWidth + .75}px`;
+        slice.style.height = `${rect.height}px`;
+        slice.style.setProperty('--early-x', `${targetX * .18}px`);
+        slice.style.setProperty('--early-y', `${targetY * .18}px`);
+        slice.style.setProperty('--target-x', `${targetX}px`);
+        slice.style.setProperty('--target-y', `${targetY}px`);
+        slice.style.setProperty('--target-z', `${Math.cos(longitude) * radius * .18}px`);
+        slice.style.setProperty('--early-rotation', `${rotation * .18}deg`);
+        slice.style.setProperty('--slice-rotation', `${rotation}deg`);
+        slice.style.setProperty('--early-scale-x', `${1 + (scaleX - 1) * .18}`);
+        slice.style.setProperty('--early-scale-y', `${1 + (scaleY - 1) * .18}`);
+        slice.style.setProperty('--scale-x', `${scaleX}`);
+        slice.style.setProperty('--scale-y', `${scaleY}`);
+        slice.style.setProperty('--slice-light', `${.58 + Math.cos(longitude) * .42}`);
+        slice.style.setProperty('--slice-delay', `${Math.abs(index - (slices - 1) / 2) * 18}ms`);
+
+        const content = card.cloneNode(true);
+        content.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+        content.querySelectorAll('input, button, a').forEach(node => node.tabIndex = -1);
+        content.setAttribute('aria-hidden', 'true');
+        content.style.left = `${-index * sourceWidth}px`;
+        content.style.top = '0';
+        content.style.width = `${rect.width}px`;
+        content.style.height = `${rect.height}px`;
+        slice.appendChild(content);
+        stage.appendChild(slice);
+      }
+
+      const surface = document.createElement('div');
+      surface.className = 'globe-surface';
+      surface.style.left = `${center.x - radius}px`;
+      surface.style.top = `${center.y - radius}px`;
+      surface.style.width = `${radius * 2}px`;
+      surface.style.height = `${radius * 2}px`;
+      const surfaceGrid = document.createElement('div');
+      surfaceGrid.className = 'globe-grid';
+      surface.appendChild(surfaceGrid);
+
+      const glyphs = '000111222333444555666777888999ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const characters = Array.from({ length: 68 }, (_, index) => {
+        const element = document.createElement('span');
+        element.className = 'data-orbit';
+        element.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+        element.dataset.longitude = String(Math.random() * Math.PI * 2);
+        element.dataset.latitude = String((Math.random() - .5) * Math.PI * .86);
+        surface.appendChild(element);
+        return element;
+      });
+      stage.appendChild(surface);
+
+      const speedField = document.createElement('div');
+      speedField.className = 'speed-field';
+      speedField.style.left = `${center.x - radius * 1.75}px`;
+      speedField.style.top = `${center.y - radius * .78}px`;
+      speedField.style.width = `${radius * 3.5}px`;
+      speedField.style.height = `${radius * 1.56}px`;
+      for (let index = 0; index < 4; index++) {
+        const ring = document.createElement('span');
+        ring.className = 'speed-ring';
+        ring.style.setProperty('--ring-inset', `${index * 8}px ${index * 21}px`);
+        ring.style.setProperty('--ring-alpha', `${.12 + index * .035}`);
+        ring.style.setProperty('--ring-angle', `${-12 + index * 8}deg`);
+        ring.style.setProperty('--ring-squash', `${.42 + index * .07}`);
+        speedField.appendChild(ring);
+      }
+      for (let index = 0; index < 16; index++) {
+        const streak = document.createElement('span');
+        streak.className = 'speed-streak';
+        streak.style.setProperty('--streak-angle', `${index / 16 * 360 + Math.random() * 9}deg`);
+        streak.style.setProperty('--streak-distance', `${radius * (.96 + Math.random() * .65)}px`);
+        streak.style.setProperty('--streak-length', `${22 + Math.random() * 52}px`);
+        streak.style.setProperty('--streak-alpha', `${.12 + Math.random() * .35}`);
+        speedField.appendChild(streak);
+      }
+      stage.appendChild(speedField);
+      document.body.appendChild(stage);
+      requestAnimationFrame(() => document.body.classList.add('globe-running'));
+
+      const orbitStarts = performance.now() + 2050;
+      function animateCharacters(now) {
+        const progress = Math.max(0, Math.min(1, (now - orbitStarts) / 5000));
+        const acceleration = (Math.exp(progress * 3.5) - 1) / (Math.exp(3.5) - 1);
+        const globeTurn = acceleration * Math.PI * 2 * 5.2;
+        if (progress > 0) stage.classList.add('formed');
+        surfaceGrid.style.transform = `rotate(${globeTurn * .14}rad) scaleX(${.92 + Math.sin(globeTurn) * .055})`;
+        surfaceGrid.style.filter = `blur(${acceleration * .55}px)`;
+        characters.forEach((character, index) => {
+          const latitude = Number(character.dataset.latitude);
+          const longitude = Number(character.dataset.longitude) + globeTurn;
+          const depth = Math.cos(latitude) * Math.cos(longitude);
+          const x = radius + Math.cos(latitude) * Math.sin(longitude) * radius * .88;
+          const y = radius + Math.sin(latitude) * radius * .82;
+          const reveal = Math.min(1, Math.max(0, (now - orbitStarts - index * 9) / 330));
+          const ending = Math.min(1, (1 - progress) * 8);
+          const facing = Math.max(0, Math.min(1, (depth + .08) / .42));
+          character.style.opacity = String(reveal * ending * facing * (.42 + Math.max(0, depth) * .58));
+          character.style.filter = `blur(${Math.max(0, .22 - depth) * 1.4 + acceleration * .28}px)`;
+          character.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%,-50%) scale(${.68 + Math.max(0, depth) * .48})`;
+        });
+        const speedReveal = Math.min(1, Math.max(0, progress * 5));
+        const speedEnding = Math.min(1, (1 - progress) * 7);
+        speedField.style.opacity = String(speedReveal * speedEnding * (.18 + acceleration * .82));
+        speedField.style.transform = `rotate(${globeTurn * .065}rad) scaleX(${1 + acceleration * .20})`;
+        speedField.style.filter = `blur(${acceleration * .72}px)`;
+        if (progress < 1) requestAnimationFrame(animateCharacters);
+        else setTimeout(() => location.reload(), 180);
+      }
+      requestAnimationFrame(animateCharacters);
+    }
+    function runMelting() {
+      const card = document.querySelector('.login-card');
+      const rect = card.getBoundingClientRect();
+      const stage = document.createElement('div');
+      stage.className = 'melt-stage';
+      const strips = 44;
+      const stripWidth = rect.width / strips;
+
+      for (let index = 0; index < strips; index++) {
+        const strip = document.createElement('div');
+        strip.className = 'melt-strip';
+        strip.style.left = `${rect.left + index * stripWidth}px`;
+        strip.style.top = `${rect.top}px`;
+        strip.style.width = `${stripWidth + .8}px`;
+        strip.style.height = `${rect.height}px`;
+
+        const wave = Math.sin(index * .61 + Math.sin(index * .27)) * 22;
+        const secondaryWave = Math.cos(index * .39) * 13;
+        const meltDistance = 92 + Math.random() * 172 + Math.abs(wave);
+        const stretch = 1.08 + Math.random() * .52;
+        const bend = (Math.random() - .5) * 8;
+        strip.style.setProperty('--sway-a', `${wave * .12}px`);
+        strip.style.setProperty('--sway-b', `${wave * .48 + secondaryWave * .18}px`);
+        strip.style.setProperty('--sway-c', `${wave + secondaryWave * .56}px`);
+        strip.style.setProperty('--sway-d', `${wave * 1.28 + secondaryWave + (Math.random() - .5) * 17}px`);
+        strip.style.setProperty('--mid-y', `${meltDistance * .20}px`);
+        strip.style.setProperty('--end-y', `${meltDistance * .66}px`);
+        strip.style.setProperty('--exit-y', `${meltDistance}px`);
+        strip.style.setProperty('--mid-width', `${.82 + Math.random() * .30}`);
+        strip.style.setProperty('--stretch', `${stretch}`);
+        strip.style.setProperty('--end-stretch', `${stretch + .26 + Math.random() * .34}`);
+        strip.style.setProperty('--exit-stretch', `${stretch + .58 + Math.random() * .44}`);
+        strip.style.setProperty('--bend-a', `${bend * .18}deg`);
+        strip.style.setProperty('--bend-b', `${bend * .62}deg`);
+        strip.style.setProperty('--bend-c', `${bend + secondaryWave * .10}deg`);
+        strip.style.setProperty('--bend-d', `${bend * 1.38 + secondaryWave * .16}deg`);
+        strip.style.setProperty('--skew-a', `${wave * .045}deg`);
+        strip.style.setProperty('--skew-b', `${-wave * .10}deg`);
+        strip.style.setProperty('--skew-c', `${secondaryWave * .20}deg`);
+        strip.style.setProperty('--skew-d', `${(wave + secondaryWave) * .20}deg`);
+        strip.style.setProperty('--liquid-round', `${5 + Math.random() * 14}px`);
+        strip.style.setProperty('--melt-delay', `${Math.abs(index - strips / 2) * 3 + Math.random() * 96}ms`);
+
+        const content = card.cloneNode(true);
+        content.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+        content.querySelectorAll('input, button, a').forEach(node => node.tabIndex = -1);
+        content.setAttribute('aria-hidden', 'true');
+        content.style.left = `${-index * stripWidth}px`;
+        content.style.top = '0';
+        content.style.width = `${rect.width}px`;
+        content.style.height = `${rect.height}px`;
+        strip.appendChild(content);
+        stage.appendChild(strip);
+      }
+
+      const sheen = document.createElement('div');
+      sheen.className = 'melt-sheen';
+      sheen.style.left = `${rect.left}px`;
+      sheen.style.top = `${rect.top}px`;
+      sheen.style.width = `${rect.width}px`;
+      sheen.style.height = `${rect.height}px`;
+      stage.appendChild(sheen);
+
+      for (let index = 0; index < 30; index++) {
+        const drop = document.createElement('span');
+        const size = 3.5 + Math.random() * 13;
+        const fall = 80 + Math.random() * 175;
+        drop.className = 'melt-drop';
+        drop.style.left = `${rect.left + rect.width * (.04 + Math.random() * .92)}px`;
+        drop.style.top = `${rect.bottom - size * .35}px`;
+        drop.style.width = `${size}px`;
+        drop.style.height = `${size * (1.12 + Math.random() * .72)}px`;
+        drop.style.setProperty('--drop-delay', `${720 + Math.random() * 850}ms`);
+        drop.style.setProperty('--drop-drift', `${(Math.random() - .5) * 42}px`);
+        drop.style.setProperty('--drop-fall', `${fall}px`);
+        drop.style.setProperty('--drop-exit', `${fall + 72 + Math.random() * 85}px`);
+        drop.style.setProperty('--drop-rotate', `${(Math.random() - .5) * 36}deg`);
+        stage.appendChild(drop);
+      }
+
+      document.body.appendChild(stage);
+      requestAnimationFrame(() => document.body.classList.add('melt-running'));
+      setTimeout(() => location.reload(), 4140);
+    }
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const username = document.querySelector('#email').value.trim().toLowerCase();
+      if (username !== 'communique' || password.value !== 'cinemark') {
+        status.textContent = 'Invalid credentials. Use communique and cinemark for this test.';
+        return;
+      }
+      status.textContent = 'Access granted.';
+      form.querySelectorAll('input, button').forEach(control => control.disabled = true);
+      setTimeout(runMelting, 240);
+    });
+  </script>
+</body>
+</html>
