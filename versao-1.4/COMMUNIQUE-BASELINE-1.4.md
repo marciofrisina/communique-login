@@ -1,6 +1,6 @@
 # Communique Login — Baseline 1.4
 
-Status: primeiro experimento da versão 1.4, iniciado em 3 de agosto de 2026.
+Status: versão 1.4 finalizada em 4 de agosto de 2026.
 
 Arquivo de entrada: `index.html`
 
@@ -22,6 +22,8 @@ Credenciais do protótipo:
 - Password: `c`
 
 O objeto âmbar seleciona uma estrela em um catálogo de 55 possibilidades, mostra sua constelação e distância aproximada, e mantém um histórico local das últimas 12 escolhas para reduzir repetições.
+
+Um segundo objeto neon azul percorre exatamente o outline arredondado do cartão em velocidade linear constante. Ele permanece inativo até o primeiro foco nos campos de usuário ou senha e, então, continua sem reiniciar. A volta leva 30 segundos — duas vezes a velocidade da implementação azul anterior, de 60 segundos — e utiliza luminosidade reduzida. A cauda também acompanha os segmentos retos e as curvas dos cantos.
 
 Pontos de restauração preservados:
 

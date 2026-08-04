@@ -35,7 +35,7 @@ As duas versões permanecem separadas para que a versão 1.0 continue sendo um p
 - Experiência principal: melting orgânico com 44 filetes, turbulência contínua e 30 gotas.
 - Experiência anterior do globo preservada em `versao-1.3/globe.html`.
 
-## Versão 1.4 em desenvolvimento
+## Versão 1.4 finalizada
 
 - Página principal: `versao-1.4/index.html`
 - Flip horizontal de 180° após a autenticação.

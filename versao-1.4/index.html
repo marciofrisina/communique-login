@@ -130,7 +130,7 @@
         <button class="submit" type="submit">Sign in</button><p class="status" id="status" role="status" aria-live="polite"></p>
       </form>
       <p class="signup">Don't have an account? <a href="#signup">Request an account</a></p>
-      <p class="version">VERSION 1.4 · FLIP TEST</p>
+      <p class="version">VERSION 1.4</p>
       <a class="release-notes" href="release-notes.html" aria-label="View what's new" title="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.75a6.75 6.75 0 0 1 6.75 6.75c0 7.75 2.5 8.75 2.5 8.75H2.75s2.5-1 2.5-8.75A6.75 6.75 0 0 1 12 2.75Z"/><path d="M9.5 21.25h5"/></svg></a>
     </section>
     <section class="login-card login-back" aria-labelledby="overview-title" aria-hidden="true">
@@ -233,7 +233,7 @@
         overlap: .08 + ((moonPlacementSeed[0] >>> 8) % 1000) / 1000 * .28
       };
       const pointer = { x: .5, y: .5 }, pointerTarget = { x: .5, y: .5 }, hoverPointer = { clientX: -999, clientY: -999 };
-      let width, height, dpr, particles, blobs, sparks, filaments, galaxyClouds, meteors, orbiter, orbiterHit = null, filamentSteps, animationTime = 0, lastFrame = 0;
+      let width, height, dpr, particles, blobs, sparks, filaments, galaxyClouds, meteors, orbiter, orbiterHit = null, blueOutlineStartedAt = null, filamentSteps, animationTime = 0, lastFrame = 0;
       const colors = [[72, 124, 234], [110, 165, 255], [167, 205, 255], [222, 236, 255]];
       const random = (min, max) => min + Math.random() * (max - min);
       const rgba = (rgb, a) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a})`;
@@ -252,7 +252,7 @@
         filamentSteps = Math.round(66 + detail * 30);
         galaxyClouds = Array.from({ length: 4 }, (_, i) => ({ x: i < 2 ? random(-.05, .26) : random(.74, 1.05), y: random(.04, .96), radius: random(.20, .39), squash: random(.28, .68), angle: random(-.8, .8), phase: random(0, Math.PI * 2), rate: random(.004, .012) * (i % 2 ? -1 : 1), color: [[47, 84, 180], [63, 108, 214], [82, 93, 184]][i % 3] }));
         meteors = [{ active: false, next: random(16, 36) }];
-        orbiter = { radiusX: width * .50, radiusY: Math.max(height * .29, 175), tilt: -.18, phase: random(0, Math.PI * 2), speed: .043 };
+        orbiter = { radiusX: width * .50, radiusY: Math.max(height * .29, 175), tilt: -.18, phase: random(0, Math.PI * 2), speed: Math.PI * 2 / 120 };
       }
 
       function drawGalaxyClouds(t) {
@@ -455,11 +455,11 @@
         ctx.restore();
       }
 
-      function orbitPoint(t) {
-        const theta = orbiter.phase + t * orbiter.speed;
+      function orbitPoint(t, body = orbiter) {
+        const theta = body.phase + t * body.speed;
         const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
-        const x0 = Math.cos(theta) * orbiter.radiusX, y0 = Math.sin(theta) * orbiter.radiusY;
-        const cosTilt = Math.cos(orbiter.tilt), sinTilt = Math.sin(orbiter.tilt);
+        const x0 = Math.cos(theta) * body.radiusX, y0 = Math.sin(theta) * body.radiusY;
+        const cosTilt = Math.cos(body.tilt), sinTilt = Math.sin(body.tilt);
         return { x: cx + x0 * cosTilt - y0 * sinTilt, y: cy + x0 * sinTilt + y0 * cosTilt, depth: (Math.sin(theta) + 1) * .5 };
       }
 
@@ -490,6 +490,69 @@
         drawOrbiter(head.depth >= .5 ? orbitCtx : ctx, head, tail, pulse, brightness);
       }
 
+      function roundedCardPoint(t, lag = 0) {
+        const card = document.querySelector('.login-front').getBoundingClientRect();
+        const radius = Math.min(20, card.width * .5, card.height * .5);
+        const horizontal = card.width - radius * 2;
+        const vertical = card.height - radius * 2;
+        const corner = Math.PI * radius * .5;
+        const perimeter = horizontal * 2 + vertical * 2 + corner * 4;
+        let distance = ((((t - lag) / 30) % 1) + 1) % 1 * perimeter;
+        const line = (length, pointAt) => {
+          if (distance > length) { distance -= length; return null; }
+          return pointAt(distance / length);
+        };
+        const arc = (startAngle, cx, cy) => line(corner, progress => {
+          const angle = startAngle + progress * Math.PI * .5;
+          return { x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, depth: 1 };
+        });
+        return line(horizontal, progress => ({ x: card.left + radius + horizontal * progress, y: card.top, depth: 1 }))
+          || arc(-Math.PI * .5, card.right - radius, card.top + radius)
+          || line(vertical, progress => ({ x: card.right, y: card.top + radius + vertical * progress, depth: 1 }))
+          || arc(0, card.right - radius, card.bottom - radius)
+          || line(horizontal, progress => ({ x: card.right - radius - horizontal * progress, y: card.bottom, depth: 1 }))
+          || arc(Math.PI * .5, card.left + radius, card.bottom - radius)
+          || line(vertical, progress => ({ x: card.left, y: card.bottom - radius - vertical * progress, depth: 1 }))
+          || arc(Math.PI, card.left + radius, card.top + radius);
+      }
+
+      function drawNeonOrbiter(target, head, trailPoints, pulse) {
+        const tail = trailPoints[0];
+        const trail = target.createLinearGradient(tail.x, tail.y, head.x, head.y);
+        trail.addColorStop(0, 'rgba(42, 118, 255, 0)');
+        trail.addColorStop(.42, 'rgba(45, 140, 255, .018)');
+        trail.addColorStop(.80, 'rgba(64, 205, 255, .085)');
+        trail.addColorStop(1, 'rgba(181, 250, 255, .30)');
+        target.save();
+        target.globalCompositeOperation = 'lighter';
+        target.lineCap = 'round';
+        target.strokeStyle = trail;
+        target.lineWidth = 1.15;
+        target.shadowColor = 'rgba(43, 177, 255, .52)';
+        target.shadowBlur = 7;
+        target.beginPath();
+        trailPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+        target.stroke();
+        const halo = target.createRadialGradient(head.x, head.y, 0, head.x, head.y, 19);
+        halo.addColorStop(0, `rgba(231, 255, 255, ${.48 * pulse})`);
+        halo.addColorStop(.13, `rgba(99, 231, 255, ${.27 * pulse})`);
+        halo.addColorStop(.46, `rgba(31, 139, 255, ${.075 * pulse})`);
+        halo.addColorStop(1, 'rgba(20, 76, 255, 0)');
+        target.fillStyle = halo; target.fillRect(head.x - 22, head.y - 22, 44, 44);
+        target.fillStyle = 'rgba(226, 255, 255, .66)';
+        target.beginPath(); target.arc(head.x, head.y, 2.15, 0, Math.PI * 2); target.fill();
+        target.restore();
+      }
+
+      function drawBlueNeonOrbit(t) {
+        if (reducedMotion || blueOutlineStartedAt === null) return;
+        const activeTime = t - blueOutlineStartedAt;
+        const trailPoints = Array.from({ length: 18 }, (_, index) => roundedCardPoint(activeTime, .78 * (1 - index / 17)));
+        const head = trailPoints[trailPoints.length - 1];
+        const pulse = .78 + Math.sin(t * 1.65) * .12 + Math.sin(t * .61) * .06;
+        drawNeonOrbiter(orbitCtx, head, trailPoints, pulse);
+      }
+
       function updateOrbiterRollover(event) {
         if (!orbiterHit || reducedMotion) return;
         const distance = Math.hypot(event.clientX - orbiterHit.x, event.clientY - orbiterHit.y);
@@ -506,10 +569,13 @@
         const pointerEase = 1 - Math.pow(.965, delta * 60);
         pointer.x += (pointerTarget.x - pointer.x) * pointerEase; pointer.y += (pointerTarget.y - pointer.y) * pointerEase;
         orbitCtx.clearRect(0, 0, width, height);
-        drawPlasma(animationTime); drawMoon(animationTime); drawFilaments(animationTime); drawParticles(animationTime); drawMeteors(animationTime); drawHiddenOrbit(animationTime); updateOrbiterRollover(hoverPointer); requestAnimationFrame(draw);
+        drawPlasma(animationTime); drawMoon(animationTime); drawFilaments(animationTime); drawParticles(animationTime); drawMeteors(animationTime); drawHiddenOrbit(animationTime); drawBlueNeonOrbit(animationTime); updateOrbiterRollover(hoverPointer); requestAnimationFrame(draw);
       }
       addEventListener('resize', resize, { passive: true }); addEventListener('pointermove', event => { hoverPointer.clientX = event.clientX; hoverPointer.clientY = event.clientY; pointerTarget.x = event.clientX / width; pointerTarget.y = event.clientY / height; }, { passive: true });
       addEventListener('pointerleave', () => { hoverPointer.clientX = -999; hoverPointer.clientY = -999; orbiterLabel.classList.remove('visible'); }, { passive: true });
+      document.querySelectorAll('#email, #password').forEach(field => field.addEventListener('focus', () => {
+        if (blueOutlineStartedAt === null) blueOutlineStartedAt = animationTime;
+      }));
       resize(); requestAnimationFrame(draw);
     })();
     (() => {
