@@ -40,3 +40,11 @@ As duas versões permanecem separadas para que a versão 1.0 continue sendo um p
 - Página principal: `versao-1.4/index.html`
 - Flip horizontal de 180° após a autenticação.
 - Verso com 10–200 notificações, 1–7 países, última atualização e botão `Go to Communique`.
+
+## Versão 1.5 — desempenho
+
+- Página principal: `versao-1.5/index.html`
+- Lua removida; fundo limitado a 30 FPS e resolução reduzida.
+- Pausa nos campos de login e em abas ocultas; modo econômico manual e automático.
+- Credenciais do protótipo: `c` / `c`. Versão 1.4 preservada.
+- Pacote: `pacotes/communique-login-v1.5.zip`.

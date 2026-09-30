@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+Pinstripe&display=swap" rel="stylesheet" />
+  <title>Communique 7 — Sign in · Version 1.5</title>
+  <style>
+    :root { background: #020307; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: #020307; font-family: system-ui, sans-serif; }
+    canvas { display: block; width: 100%; height: 100%; }
+    #orbit-foreground { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    .orbiter-label { position: fixed; z-index: 4; min-width: 150px; padding: 7px 10px 8px; border: 1px solid rgba(255, 191, 119, .28); border-radius: 8px; pointer-events: none; opacity: 0; color: #ffe6c7; background: rgba(13, 9, 10, .84); box-shadow: 0 8px 28px rgba(0,0,0,.36), 0 0 18px rgba(255, 137, 70, .11); backdrop-filter: blur(10px); transform: translate(12px, -50%) scale(.96); transform-origin: left center; transition: opacity .18s ease, transform .18s ease; font: 500 12px/1.25 system-ui, sans-serif; letter-spacing: .02em; }
+    .orbiter-label.visible { opacity: 1; transform: translate(12px, -50%) scale(1); }
+    .orbiter-label small { display: block; margin-top: 2px; color: #a9907c; font-size: 9px; letter-spacing: .09em; text-transform: uppercase; }
+    .veil { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,.12) 55%, rgba(0,0,0,.78) 120%); }
+    .login-wrap { position: fixed; z-index: 1; inset: 0; display: grid; place-items: center; padding: 24px; }
+    .login-card { width: min(100%, 402px); padding: 34px 38px 31px; border: 1px solid rgba(190, 219, 255, .20); border-radius: 20px; color: #eff8ff; background: rgba(4, 8, 18, .66); box-shadow: 0 26px 100px rgba(0,0,0,.56), inset 0 1px 0 rgba(255,255,255,.10); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .brand-name { margin: 0 0 8px; color: rgba(224, 239, 255, .94); text-align: center; font: 400 27px/1 "Alumni Sans Pinstripe", sans-serif; letter-spacing: .12em; }
+    .brand { display: flex; justify-content: center; height: 84px; margin: 0 0 20px; }.brand img { width: 138px; height: 84px; object-fit: contain; opacity: .92; filter: saturate(1.18) contrast(1.06) brightness(1.12); }
+    h1 { margin: 0; font: 600 27px/1.14 system-ui, sans-serif; letter-spacing: -.045em; }.intro { margin: 9px 0 25px; color: #9eacbb; font-size: 14px; line-height: 1.5; }
+    #login-form { margin-top: 24px; }
+    .field { display: grid; gap: 8px; margin-top: 16px; } label, .options { color: #bfccd8; font: 500 12px/1.2 system-ui, sans-serif; }.input-wrap { position: relative; }
+    input[type="email"], input[type="password"], input[type="text"] { width: 100%; height: 48px; padding: 0 45px 0 14px; border: 1px solid rgba(180, 209, 233, .17); border-radius: 10px; outline: none; color: #f4fbff; background: rgba(255,255,255,.055); font: 400 15px system-ui, sans-serif; transition: .2s; } input::placeholder { color: #6f7e8c; } input:focus { border-color: rgba(116, 234, 233, .82); box-shadow: 0 0 0 3px rgba(103,232,237,.10), 0 0 22px rgba(168, 112, 255, .11); }
+    #email { padding-left: 48px; }
+    .location-flag { position: absolute; z-index: 1; left: 13px; top: 50%; display: grid; place-items: center; width: 23px; height: 23px; overflow: hidden; border: 1px solid rgba(205,230,255,.20); border-radius: 50%; color: #91a2b4; background: rgba(255,255,255,.07); box-shadow: 0 2px 9px rgba(0,0,0,.32); transform: translateY(-50%); font-size: 16px; line-height: 1; }
+    .toggle-password { position: absolute; top: 7px; right: 9px; height: 34px; border: 0; padding: 0 8px; color: #ace6eb; background: transparent; cursor: pointer; font: 500 12px system-ui, sans-serif; }
+    .options { display: flex; justify-content: space-between; align-items: center; margin: 17px 0 22px; }.remember { display: flex; align-items: center; gap: 8px; cursor: pointer; } input[type="checkbox"] { accent-color: #78ece8; } a { color: #84e7ed; text-decoration: none; } a:hover { text-decoration: underline; }
+    .submit { width: 100%; height: 50px; border: 0; border-radius: 10px; cursor: pointer; color: #061116; background: linear-gradient(105deg, #74e6e4, #a78cff); box-shadow: 0 9px 28px rgba(103, 194, 226, .23); font: 700 14px system-ui, sans-serif; transition: transform .2s, box-shadow .2s; }.submit:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(120, 137, 255, .36); }.submit:active { transform: translateY(0); }
+    .status { min-height: 18px; margin: 13px 0 0; text-align: center; color: #9aeccd; font-size: 13px; line-height: 1.4; }.signup { margin: 23px 0 0; color: #9eacbb; text-align: center; font-size: 13px; line-height: 1.4; }.version { margin: 22px 0 0; color: #687785; text-align: center; font-size: 11px; letter-spacing: .08em; }
+    .release-notes { display: grid; place-items: center; width: 28px; height: 28px; margin: 9px auto 0; border: 1px solid rgba(169, 198, 255, .15); border-radius: 50%; color: #8fbac8; transition: .2s; }.release-notes:hover, .release-notes:focus-visible { border-color: rgba(116,234,233,.7); color: #c6fbff; background: rgba(116,234,233,.08); box-shadow: 0 0 16px rgba(116,234,233,.13); outline: none; }.release-notes svg { width: 13px; height: 13px; }
+    .flip-scene { width: min(100%, 402px); perspective: 1400px; }
+    .flip-card-inner { display: grid; width: 100%; transform-style: preserve-3d; transition: transform 1.18s cubic-bezier(.62,.02,.20,1); }
+    .flip-card-inner.is-flipped { transform: rotateY(180deg); }
+    .flip-scene .login-card { grid-area: 1 / 1; width: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform-style: preserve-3d; }
+    .login-back { display: flex; min-height: 100%; flex-direction: column; transform: rotateY(180deg); }
+    .login-back .brand-name { margin-bottom: 29px; }
+    .back-kicker { margin: 1px 0 9px; color: #83e6e9; font-size: 11px; letter-spacing: .10em; text-transform: uppercase; }
+    .back-heading { margin-bottom: 25px; }
+    .overview-grid { display: grid; grid-template-columns: 112px 1fr; gap: 12px; }
+    .overview-panel { padding: 17px; border: 1px solid rgba(169,211,244,.14); border-radius: 13px; background: rgba(255,255,255,.045); }
+    .notification-panel { display: grid; width: 112px; height: 112px; place-items: center; padding: 10px; overflow: hidden; text-align: center; }
+    .notification-stage { position: relative; display: grid; width: 90px; height: 90px; place-items: center; isolation: isolate; border-radius: 20px; background: rgba(255,255,255,.045); }
+    .notification-stage::before, .notification-stage::after, .notification-ripple { position: absolute; z-index: -1; inset: 8px; border: 1px solid rgba(169,211,244,.18); border-radius: 19px; content: ""; opacity: 0; transform: scale(.62); }
+    .notification-panel.is-new .notification-stage::before { animation: notification-ripple 1.65s cubic-bezier(.18,.72,.25,1) .08s both; }
+    .notification-panel.is-new .notification-stage::after { animation: notification-ripple 1.65s cubic-bezier(.18,.72,.25,1) .26s both; }
+    .notification-panel.is-new .notification-ripple { animation: notification-ripple 1.65s cubic-bezier(.18,.72,.25,1) .44s both; }
+    .notification-panel .overview-label { position: absolute; top: 11px; z-index: 2; width: 100%; margin: 0; text-align: center; }
+    .overview-label { margin: 0 0 8px; color: #8796a6; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+    .notification-count { display: grid; place-items: center; margin: 13px 0 0; color: #eafaff; font: 700 34px/1 system-ui, sans-serif; letter-spacing: -.06em; text-shadow: 0 5px 16px rgba(0,0,0,.42); }
+    .notification-panel.is-new .notification-stage { animation: notification-tile 1.45s cubic-bezier(.18,.78,.22,1) both; }
+    .notification-panel.is-new .notification-count { animation: notification-number 1.25s cubic-bezier(.16,.84,.28,1) .12s both; }
+    @keyframes notification-tile { 0% { transform: scale(.88); box-shadow: 0 0 0 rgba(0,0,0,0); } 38% { transform: scale(1.055); box-shadow: 0 13px 23px rgba(0,0,0,.34); } 64% { transform: scale(.985); } 100% { transform: scale(1); box-shadow: 0 8px 17px rgba(0,0,0,.22); } }
+    @keyframes notification-number { 0% { opacity: 0; transform: translateY(8px) scale(.58); filter: blur(4px); } 44% { opacity: 1; transform: translateY(-2px) scale(1.14); filter: blur(0); } 70% { transform: translateY(0) scale(.96); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+    @keyframes notification-ripple { 0% { opacity: 0; transform: scale(.58); } 24% { opacity: .54; } 100% { inset: -8px; opacity: 0; border-radius: 27px; transform: scale(1.16); } }
+    .country-count { margin-left: 5px; color: #7ce8eb; font-size: 11px; }
+    .country-list { display: grid; grid-template-columns: 1fr; gap: 7px; margin-top: 9px; }
+    .country-list.multi-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .country-chip { display: inline-flex; min-width: 0; align-items: center; gap: 6px; padding: 5px 7px 5px 5px; overflow: hidden; border: 1px solid rgba(172,215,242,.13); border-radius: 999px; color: #c8d5df; background: rgba(0,0,0,.14); font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
+    .country-flag { display: grid; flex: 0 0 18px; place-items: center; width: 18px; height: 18px; overflow: hidden; border-radius: 50%; background: rgba(255,255,255,.06); font-size: 13px; }
+    .country-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .last-access-panel { margin-top: 12px; padding: 14px 16px; border: 1px solid rgba(169,211,244,.14); border-radius: 13px; background: rgba(255,255,255,.035); }
+    .last-access-row { display: flex; align-items: baseline; justify-content: space-between; gap: 15px; }
+    .last-access-row .overview-label { margin: 0; }
+    .last-access-value { color: #d7e7ef; font-size: 11px; text-align: right; white-space: nowrap; }
+    .system-update { display: flex; justify-content: space-between; gap: 16px; margin: 18px 0 24px; padding: 13px 2px 0; border-top: 1px solid rgba(169,211,244,.11); color: #8493a2; font-size: 11px; white-space: nowrap; }
+    .system-update strong { margin-left: 5px; color: #82e6e9; font-weight: 600; letter-spacing: .04em; }
+    .system-update time { color: #c5d4dd; }
+    .go-communique { width: 100%; height: 50px; margin-top: auto; border: 0; border-radius: 10px; cursor: pointer; color: #061116; background: linear-gradient(105deg, #74e6e4, #a78cff); box-shadow: 0 9px 28px rgba(103,194,226,.23); font: 700 14px system-ui, sans-serif; transition: transform .2s, box-shadow .2s; }
+    .go-communique:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(120,137,255,.36); }
+    @media (max-width: 460px) { .login-wrap { padding: 16px; }.login-card { padding: 29px 23px; border-radius: 16px; }.brand-name { font-size: 24px; }.brand { height: 72px; }.brand img { width: 120px; height:72px; } h1 { font-size: 25px; } }
+    @media (prefers-reduced-motion: reduce) { .veil { background: rgba(2,3,7,.72); } .notification-panel.is-new .notification-stage, .notification-panel.is-new .notification-count, .notification-panel.is-new .notification-stage::before, .notification-panel.is-new .notification-stage::after, .notification-panel.is-new .notification-ripple { animation: none; } }
+    .economy-toggle { position: fixed; z-index: 5; right: 12px; bottom: 10px; padding: 8px 12px; border: 1px solid #394959; border-radius: 8px; background: #091321; color: #bfccd8; cursor: pointer; font: 12px system-ui, sans-serif; }
+    .economy-toggle:focus-visible { outline: 2px solid #74e6e4; outline-offset: 3px; }
+    .economy-mode .login-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(4,8,18,.90); }
+    @media (prefers-reduced-motion: reduce) { .flip-card-inner { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <canvas id="universe" aria-label="Decorative plasma background"></canvas>
+  <canvas id="orbit-foreground" aria-hidden="true"></canvas>
+  <div class="orbiter-label" id="orbiter-label" role="tooltip"><span></span><small id="orbiter-constellation"></small><small><span id="orbiter-distance"></span> from Earth</small></div>
+  <div class="veil"></div>
+  <main class="login-wrap">
+   <div class="flip-scene"><div class="flip-card-inner" id="flip-card">
+    <section class="login-card login-front" aria-labelledby="login-title">
+      <p class="brand-name">COMMUNIQUE 7</p>
+      <div class="brand"><img src="communique-logo-336.webp" alt="Communique" /></div>
+      <h1 id="login-title">Welcome back</h1>
+      <form id="login-form" novalidate>
+        <div class="field"><label for="email">User or Email</label><div class="input-wrap"><span class="location-flag" id="location-flag" role="img" aria-label="Detecting location" title="Detecting location">·</span><input id="email" name="email" type="text" autocomplete="username" placeholder="User or email" required /></div></div>
+        <div class="field"><label for="password">Password</label><div class="input-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required minlength="1" /><button class="toggle-password" type="button" aria-label="Show password">Show</button></div></div>
+        <div class="options"><label class="remember"><input type="checkbox" name="remember" /> Remember me</label><a href="#recover">Forgot password?</a></div>
+        <button class="submit" type="submit">Sign in</button><p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="signup">Don't have an account? <a href="#signup">Request an account</a></p>
+      <p class="version">VERSION 1.5</p>
+      <a class="release-notes" href="release-notes.html" aria-label="View what's new" title="What's new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.75a6.75 6.75 0 0 1 6.75 6.75c0 7.75 2.5 8.75 2.5 8.75H2.75s2.5-1 2.5-8.75A6.75 6.75 0 0 1 12 2.75Z"/><path d="M9.5 21.25h5"/></svg></a>
+    </section>
+    <section class="login-card login-back" aria-labelledby="overview-title" aria-hidden="true">
+      <p class="brand-name">COMMUNIQUE 7</p>
+      <p class="back-kicker">Account overview</p>
+      <h1 class="back-heading" id="overview-title">Ready to continue</h1>
+      <div class="overview-grid">
+        <div class="overview-panel notification-panel" id="notification-panel"><div class="notification-stage"><span class="notification-ripple" aria-hidden="true"></span><p class="overview-label">Notifications</p><p class="notification-count" id="notification-count" aria-live="polite">—</p></div></div>
+        <div class="overview-panel"><p class="overview-label">Countries <span class="country-count" id="country-count"></span></p><div class="country-list" id="country-list"></div></div>
+      </div>
+      <div class="last-access-panel"><div class="last-access-row"><p class="overview-label">Last Access</p><time class="last-access-value" id="last-access" datetime=""></time></div></div>
+      <div class="system-update"><span>System Update <strong>7.0.2</strong></span><time id="system-update" datetime=""></time></div>
+      <button class="go-communique" id="go-communique" type="button">Go to Communique</button>
+      <p class="version">VERSION 1.5</p>
+    </section>
+   </div></div>
+  </main>
+  <button type="button" id="economy-mode" class="economy-toggle" aria-pressed="false">Economy mode: Off</button>
+  <script>
+    (() => {
+      const canvas = document.querySelector('#universe');
+      const ctx = canvas.getContext('2d');
+      const orbitForeground = document.querySelector('#orbit-foreground');
+      const orbitCtx = orbitForeground.getContext('2d');
+      const orbiterLabel = document.querySelector('#orbiter-label');
+      const orbiterLabelName = orbiterLabel.querySelector('span');
+      const orbiterLabelDistance = document.querySelector('#orbiter-distance');
+      const orbiterLabelConstellation = document.querySelector('#orbiter-constellation');
+      const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+      let reducedMotion = motionPreference.matches;
+      const economyButton = document.querySelector('#economy-mode');
+      let savedEconomy = false;
+      try { savedEconomy = localStorage.getItem('communique-economy') === 'true'; } catch (_) {}
+      let economy = savedEconomy || !!navigator.connection?.saveData;
+      let frameId = 0, previousTick = 0, slowFrames = 0, sampledFrames = 0;
+      let cardBounds;
+      const frontCard = document.querySelector('.login-front');
+      const frameInterval = 1000 / 30;
+      const isEditing = () => document.activeElement?.matches('#email, #password');
+      const canAnimate = () => !document.hidden && !reducedMotion && !economy && !isEditing();
+      const brightStars = [
+        { name: 'Alpha Centauri', distance: '≈ 4.4 light-years' }, { name: 'Sirius', distance: '≈ 8.6 light-years' },
+        { name: 'Procyon', distance: '≈ 11.5 light-years' }, { name: 'Altair', distance: '≈ 16.7 light-years' },
+        { name: 'Vega', distance: '≈ 25 light-years' }, { name: 'Fomalhaut', distance: '≈ 25 light-years' },
+        { name: 'Pollux', distance: '≈ 34 light-years' }, { name: 'Denebola', distance: '≈ 36 light-years' },
+        { name: 'Arcturus', distance: '≈ 37 light-years' }, { name: 'Capella', distance: '≈ 43 light-years' },
+        { name: 'Rasalhague', distance: '≈ 49 light-years' }, { name: 'Castor', distance: '≈ 51 light-years' },
+        { name: 'Aldebaran', distance: '≈ 65 light-years' }, { name: 'Hamal', distance: '≈ 66 light-years' },
+        { name: 'Unukalhai', distance: '≈ 74 light-years' }, { name: 'Alphecca', distance: '≈ 75 light-years' },
+        { name: 'Regulus', distance: '≈ 79 light-years' }, { name: 'Menkalinan', distance: '≈ 81 light-years' },
+        { name: 'Alioth', distance: '≈ 83 light-years' }, { name: 'Mizar', distance: '≈ 83 light-years' },
+        { name: 'Gacrux', distance: '≈ 89 light-years' }, { name: 'Algol', distance: '≈ 90 light-years' },
+        { name: 'Diphda', distance: '≈ 96 light-years' }, { name: 'Alnair', distance: '≈ 101 light-years' },
+        { name: 'Alkaid', distance: '≈ 104 light-years' }, { name: 'Alhena', distance: '≈ 109 light-years' },
+        { name: 'Miaplacidus', distance: '≈ 113 light-years' }, { name: 'Dubhe', distance: '≈ 123 light-years' },
+        { name: 'Kochab', distance: '≈ 131 light-years' }, { name: 'Elnath', distance: '≈ 134 light-years' },
+        { name: 'Achernar', distance: '≈ 139 light-years' }, { name: 'Kaus Australis', distance: '≈ 143 light-years' },
+        { name: 'Alphard', distance: '≈ 177 light-years' }, { name: 'Peacock', distance: '≈ 179 light-years' },
+        { name: 'Nunki', distance: '≈ 228 light-years' }, { name: 'Spica', distance: '≈ 250 light-years' },
+        { name: 'Bellatrix', distance: '≈ 250 light-years' }, { name: 'Sargas', distance: '≈ 270 light-years' },
+        { name: 'Mimosa', distance: '≈ 280 light-years' }, { name: 'Canopus', distance: '≈ 310 light-years' },
+        { name: 'Acrux', distance: '≈ 320 light-years' }, { name: 'Hadar', distance: '≈ 390 light-years' },
+        { name: 'Atria', distance: '≈ 390 light-years' }, { name: 'Adhara', distance: '≈ 430 light-years' },
+        { name: 'Mirzam', distance: '≈ 500 light-years' }, { name: 'Mirfak', distance: '≈ 510 light-years' },
+        { name: 'Antares', distance: '≈ 550 light-years' }, { name: 'Shaula', distance: '≈ 570 light-years' },
+        { name: 'Avior', distance: '≈ 630 light-years' }, { name: 'Betelgeuse', distance: '≈ 650 light-years' },
+        { name: 'Rigel', distance: '≈ 860 light-years' }, { name: 'Alnitak', distance: '≈ 1,260 light-years' },
+        { name: 'Wezen', distance: '≈ 1,600 light-years' }, { name: 'Alnilam', distance: '≈ 2,000 light-years' },
+        { name: 'Deneb', distance: '≈ 2,600 light-years' }
+      ];
+      const starConstellations = {
+        'Alpha Centauri': 'Centaurus', Sirius: 'Canis Major', Procyon: 'Canis Minor', Altair: 'Aquila', Vega: 'Lyra', Fomalhaut: 'Piscis Austrinus',
+        Pollux: 'Gemini', Denebola: 'Leo', Arcturus: 'Boötes', Capella: 'Auriga', Rasalhague: 'Ophiuchus', Castor: 'Gemini', Aldebaran: 'Taurus', Hamal: 'Aries',
+        Unukalhai: 'Serpens', Alphecca: 'Corona Borealis', Regulus: 'Leo', Menkalinan: 'Auriga', Alioth: 'Ursa Major', Mizar: 'Ursa Major', Gacrux: 'Crux', Algol: 'Perseus',
+        Diphda: 'Cetus', Alnair: 'Grus', Alkaid: 'Ursa Major', Alhena: 'Gemini', Miaplacidus: 'Carina', Dubhe: 'Ursa Major', Kochab: 'Ursa Minor', Elnath: 'Taurus',
+        Achernar: 'Eridanus', 'Kaus Australis': 'Sagittarius', Alphard: 'Hydra', Peacock: 'Pavo', Nunki: 'Sagittarius', Spica: 'Virgo', Bellatrix: 'Orion', Sargas: 'Scorpius',
+        Mimosa: 'Crux', Canopus: 'Carina', Acrux: 'Crux', Hadar: 'Centaurus', Atria: 'Triangulum Australe', Adhara: 'Canis Major', Mirzam: 'Canis Major', Mirfak: 'Perseus',
+        Antares: 'Scorpius', Shaula: 'Scorpius', Avior: 'Carina', Betelgeuse: 'Orion', Rigel: 'Orion', Alnitak: 'Orion', Wezen: 'Canis Major', Alnilam: 'Orion', Deneb: 'Cygnus'
+      };
+      const orbiterNameSeed = crypto.getRandomValues(new Uint32Array(1))[0];
+      let recentStars = [];
+      try { const storedHistory = JSON.parse(localStorage.getItem('communique-recent-orbiter-stars')); if (Array.isArray(storedHistory)) recentStars = storedHistory; } catch (_) {}
+      const selectableStars = brightStars.filter(star => !recentStars.includes(star.name));
+      const starPool = selectableStars.length ? selectableStars : brightStars;
+      const selectedStar = starPool[orbiterNameSeed % starPool.length];
+      recentStars = [selectedStar.name, ...recentStars.filter(name => name !== selectedStar.name)].slice(0, 12);
+      try { localStorage.setItem('communique-recent-orbiter-stars', JSON.stringify(recentStars)); } catch (_) {}
+      orbiterLabelName.textContent = selectedStar.name;
+      orbiterLabelConstellation.textContent = `Constellation · ${starConstellations[selectedStar.name]}`;
+      orbiterLabelDistance.textContent = selectedStar.distance;
+      const pointer = { x: .5, y: .5 }, pointerTarget = { x: .5, y: .5 }, hoverPointer = { clientX: -999, clientY: -999 };
+      let width, height, dpr, particles, blobs, sparks, filaments, galaxyClouds, meteors, orbiter, orbiterHit = null, blueOutlineStartedAt = null, filamentSteps, animationTime = 0, lastFrame = 0;
+      const colors = [[72, 124, 234], [110, 165, 255], [167, 205, 255], [222, 236, 255]];
+      const random = (min, max) => min + Math.random() * (max - min);
+      const rgba = (rgb, a) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a})`;
+
+      function resize() {
+        width = innerWidth; height = innerHeight;
+        dpr = Math.min(devicePixelRatio || 1, 1, Math.sqrt(1600000 / (width * height)));
+        cardBounds = frontCard.getBoundingClientRect();
+        canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        orbitForeground.width = Math.round(width * dpr); orbitForeground.height = Math.round(height * dpr); orbitCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const detail = .55;
+        const amount = Math.max(85, Math.round(Math.max(95, Math.min(180, width * height / 10500)) * detail));
+        particles = Array.from({ length: amount }, () => ({ angle: random(0, Math.PI * 2), radius: random(.05, 1.16), drift: random(.006, .024) * (Math.random() < .5 ? -1 : 1), pulse: random(0, Math.PI * 2), size: random(.25, 1.25), color: colors[Math.floor(random(0, colors.length))] }));
+        blobs = Array.from({ length: Math.round(6 + detail * 3) }, (_, i) => ({ angle: random(0, Math.PI * 2), radius: random(.10, .92), spread: random(.26, .54), phase: random(0, Math.PI * 2), rate: random(.008, .028) * (i % 2 ? -1 : 1), color: colors[Math.floor(random(0, 3))] }));
+        sparks = Array.from({ length: Math.max(12, Math.round(amount * .16)) }, () => ({ angle: random(0, Math.PI * 2), radius: random(.18, 1.28), speed: random(.014, .043) * (Math.random() < .5 ? -1 : 1), phase: random(0, Math.PI * 2), size: random(.55, 1.85) }));
+        filaments = Array.from({ length: Math.round(7 + detail * 3) }, (_, i) => ({ radius: random(.44, 1.08), squash: random(.43, .91), tilt: random(0, Math.PI), rate: random(.006, .025) * (i % 2 ? -1 : 1), phase: random(0, Math.PI * 2), alpha: random(.07, .20), width: random(.45, 1.25), color: colors[Math.floor(random(0, colors.length))] }));
+        filamentSteps = Math.round(66 + detail * 30);
+        galaxyClouds = Array.from({ length: 4 }, (_, i) => ({ x: i < 2 ? random(-.05, .26) : random(.74, 1.05), y: random(.04, .96), radius: random(.20, .39), squash: random(.28, .68), angle: random(-.8, .8), phase: random(0, Math.PI * 2), rate: random(.004, .012) * (i % 2 ? -1 : 1), color: [[47, 84, 180], [63, 108, 214], [82, 93, 184]][i % 3] }));
+        meteors = [{ active: false, next: random(16, 36) }];
+        orbiter = { radiusX: width * .50, radiusY: Math.max(height * .29, 175), tilt: -.18, phase: random(0, Math.PI * 2), speed: Math.PI * 2 / 120 };
+      }
+
+      function drawGalaxyClouds(t) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        galaxyClouds.forEach(cloud => {
+          const r = Math.max(width, height) * cloud.radius;
+          const x = width * cloud.x + Math.sin(t * cloud.rate + cloud.phase) * 26;
+          const y = height * cloud.y + Math.cos(t * cloud.rate * .8 + cloud.phase) * 18;
+          ctx.save(); ctx.translate(x, y); ctx.rotate(cloud.angle + Math.sin(t * .04 + cloud.phase) * .06); ctx.scale(1, cloud.squash);
+          const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+          glow.addColorStop(0, rgba(cloud.color, .135)); glow.addColorStop(.32, rgba(cloud.color, .065)); glow.addColorStop(.72, rgba(cloud.color, .015)); glow.addColorStop(1, rgba(cloud.color, 0));
+          ctx.fillStyle = glow; ctx.fillRect(-r, -r, r * 2, r * 2); ctx.restore();
+        });
+        ctx.restore();
+      }
+
+      function drawPlasma(t) {
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const r = Math.max(215, Math.min(width, height) * .42);
+        const base = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(width, height) * .72);
+        base.addColorStop(0, '#0b1732'); base.addColorStop(.32, '#071127'); base.addColorStop(.72, '#030711'); base.addColorStop(1, '#020307'); ctx.fillStyle = base; ctx.fillRect(0, 0, width, height);
+        drawGalaxyClouds(t);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        blobs.forEach(blob => {
+          const a = blob.angle + t * blob.rate;
+          const orbit = blob.radius * r * (1 + Math.sin(t * .10 + blob.phase) * .10);
+          const x = cx + Math.cos(a) * orbit * 1.04;
+          const y = cy + Math.sin(a) * orbit * .72;
+          const cloud = r * blob.spread * (1 + Math.sin(t * .19 + blob.phase) * .11);
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, cloud);
+          gradient.addColorStop(0, rgba(blob.color, .105)); gradient.addColorStop(.35, rgba(blob.color, .040)); gradient.addColorStop(1, rgba(blob.color, 0)); ctx.fillStyle = gradient; ctx.fillRect(x-cloud, y-cloud, cloud*2, cloud*2);
+        });
+        const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * .57);
+        core.addColorStop(0, 'rgba(224, 239, 255, .23)'); core.addColorStop(.16, 'rgba(145, 193, 255, .15)'); core.addColorStop(.55, 'rgba(63, 121, 232, .055)'); core.addColorStop(1, 'rgba(42, 92, 190, 0)'); ctx.fillStyle = core; ctx.fillRect(cx-r*.6, cy-r*.6, r*1.2, r*1.2);
+        ctx.restore();
+      }
+
+      function drawFilaments(t) {
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const baseR = Math.max(215, Math.min(width, height) * .42);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        filaments.forEach(filament => {
+          const rotation = filament.tilt + t * filament.rate;
+          const cosR = Math.cos(rotation), sinR = Math.sin(rotation);
+          ctx.beginPath();
+          for (let i = 0; i <= filamentSteps; i++) {
+            const theta = i / filamentSteps * Math.PI * 2;
+            const wobble = 1 + Math.sin(theta * 3 + t * .17 + filament.phase) * .095 + Math.sin(theta * 7 - t * .11 + filament.phase) * .035;
+            const x0 = Math.cos(theta) * baseR * filament.radius * wobble;
+            const y0 = Math.sin(theta) * baseR * filament.radius * filament.squash * wobble;
+            const x = cx + (x0 * cosR - y0 * sinR) * 1.18;
+            const y = cy + x0 * sinR + y0 * cosR;
+            i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
+          ctx.strokeStyle = rgba(filament.color, filament.alpha); ctx.lineWidth = filament.width; ctx.shadowColor = rgba(filament.color, .30); ctx.shadowBlur = 0; ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      function drawParticles(t) {
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const baseR = Math.max(215, Math.min(width, height) * .42);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        particles.forEach(p => {
+          const angle = p.angle + t * p.drift + Math.sin(t * .15 + p.pulse) * .17;
+          const radius = baseR * p.radius * (1 + Math.sin(t * .23 + p.pulse) * .055);
+          const x = cx + Math.cos(angle) * radius * (1 + Math.sin(angle * 4 + p.pulse) * .05);
+          const y = cy + Math.sin(angle) * radius * .76;
+          const alpha = (.10 + (1 - Math.min(1, p.radius)) * .33) * (.65 + Math.sin(t * .55 + p.pulse) * .35);
+          ctx.fillStyle = rgba(p.color, alpha); ctx.beginPath(); ctx.arc(x, y, p.size, 0, Math.PI * 2); ctx.fill();
+        });
+        sparks.forEach(spark => {
+          const angle = spark.angle + t * spark.speed;
+          const radius = baseR * spark.radius * (1 + Math.sin(t * .24 + spark.phase) * .06);
+          const x = cx + Math.cos(angle) * radius; const y = cy + Math.sin(angle) * radius * .76;
+          const glow = .18 + Math.max(0, Math.sin(t * .72 + spark.phase)) * .65;
+          ctx.shadowColor = 'rgba(230,242,255,.75)'; ctx.shadowBlur = 0; ctx.fillStyle = `rgba(235,246,255,${glow})`; ctx.beginPath(); ctx.arc(x, y, spark.size, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function launchMeteor(meteor, t) {
+        const fromTop = Math.random() < .55;
+        meteor.x = fromTop ? random(-width * .12, width * 1.12) : (Math.random() < .5 ? -70 : width + 70);
+        meteor.y = fromTop ? -70 : random(height * .05, height * .78);
+        meteor.dx = fromTop ? random(-width * .30, width * .30) : (meteor.x < 0 ? width * random(.75, 1.25) : -width * random(.75, 1.25));
+        meteor.dy = fromTop ? height * random(.72, 1.10) : height * random(.20, .54);
+        meteor.duration = random(2.8, 4.4); meteor.start = t; meteor.active = true;
+        meteor.color = Math.random() < .7 ? [188, 221, 255] : [132, 174, 255];
+      }
+
+      function drawMeteors(t) {
+        if (reducedMotion) return;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+        meteors.forEach(meteor => {
+          if (!meteor.active && t >= meteor.next) launchMeteor(meteor, t);
+          if (!meteor.active) return;
+          const progress = (t - meteor.start) / meteor.duration;
+          if (progress >= 1) { meteor.active = false; meteor.next = t + random(30, 55); return; }
+          const x = meteor.x + meteor.dx * progress, y = meteor.y + meteor.dy * progress;
+          const tail = Math.min(1, progress * 4, (1 - progress) * 5);
+          const tx = x - meteor.dx * .115, ty = y - meteor.dy * .115;
+          const trail = ctx.createLinearGradient(tx, ty, x, y);
+          trail.addColorStop(0, rgba(meteor.color, 0)); trail.addColorStop(.58, rgba(meteor.color, .06 * tail)); trail.addColorStop(1, rgba([238, 247, 255], .84 * tail));
+          ctx.strokeStyle = trail; ctx.lineWidth = 1.4 + tail * 1.4; ctx.shadowColor = rgba(meteor.color, .70); ctx.shadowBlur = 12; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+          ctx.fillStyle = rgba([244, 250, 255], .78 * tail); ctx.beginPath(); ctx.arc(x, y, 1.15 + tail * 1.35, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function orbitPoint(t, body = orbiter) {
+        const theta = body.phase + t * body.speed;
+        const cx = width * .5 + (pointer.x - .5) * 16, cy = height * .5 + (pointer.y - .5) * 11;
+        const x0 = Math.cos(theta) * body.radiusX, y0 = Math.sin(theta) * body.radiusY;
+        const cosTilt = Math.cos(body.tilt), sinTilt = Math.sin(body.tilt);
+        return { x: cx + x0 * cosTilt - y0 * sinTilt, y: cy + x0 * sinTilt + y0 * cosTilt, depth: (Math.sin(theta) + 1) * .5 };
+      }
+
+      function drawOrbiter(target, head, tail, pulse, brightness) {
+        const trail = target.createLinearGradient(tail.x, tail.y, head.x, head.y);
+        trail.addColorStop(0, 'rgba(255, 139, 71, 0)');
+        trail.addColorStop(.42, `rgba(255, 166, 82, ${.025 * brightness})`);
+        trail.addColorStop(.78, `rgba(255, 185, 108, ${.12 * brightness})`);
+        trail.addColorStop(1, `rgba(255, 221, 169, ${.47 * brightness})`);
+        target.save(); target.globalCompositeOperation = 'lighter'; target.lineCap = 'round'; target.strokeStyle = trail; target.lineWidth = 1.15 + head.depth * .7; target.shadowColor = 'rgba(255, 137, 70, .60)'; target.shadowBlur = 9;
+        target.beginPath(); target.moveTo(tail.x, tail.y); target.lineTo(head.x, head.y); target.stroke();
+        const halo = target.createRadialGradient(head.x, head.y, 0, head.x, head.y, 23 + head.depth * 9);
+        halo.addColorStop(0, `rgba(255, 248, 231, ${.76 * pulse * brightness})`);
+        halo.addColorStop(.13, `rgba(255, 195, 119, ${.38 * pulse * brightness})`);
+        halo.addColorStop(.48, `rgba(255, 118, 57, ${.10 * pulse * brightness})`);
+        halo.addColorStop(1, 'rgba(255, 89, 43, 0)');
+        target.fillStyle = halo; target.fillRect(head.x - 34, head.y - 34, 68, 68);
+        target.fillStyle = `rgba(255, 246, 224, ${.88 * brightness})`; target.beginPath(); target.arc(head.x, head.y, 1.8 + head.depth * 1.1, 0, Math.PI * 2); target.fill();
+        target.restore();
+      }
+
+      function drawHiddenOrbit(t) {
+        if (reducedMotion) return;
+        const head = orbitPoint(t), tail = orbitPoint(t - 1.35);
+        orbiterHit = head;
+        const pulse = .72 + Math.sin(t * 1.12) * .16 + Math.sin(t * .47) * .08;
+        const brightness = .45 + head.depth * .55;
+        drawOrbiter(head.depth >= .5 ? orbitCtx : ctx, head, tail, pulse, brightness);
+      }
+
+      function roundedCardPoint(t, lag = 0) {
+        const card = cardBounds;
+        const radius = Math.min(20, card.width * .5, card.height * .5);
+        const horizontal = card.width - radius * 2;
+        const vertical = card.height - radius * 2;
+        const corner = Math.PI * radius * .5;
+        const perimeter = horizontal * 2 + vertical * 2 + corner * 4;
+        let distance = ((((t - lag) / 30) % 1) + 1) % 1 * perimeter;
+        const line = (length, pointAt) => {
+          if (distance > length) { distance -= length; return null; }
+          return pointAt(distance / length);
+        };
+        const arc = (startAngle, cx, cy) => line(corner, progress => {
+          const angle = startAngle + progress * Math.PI * .5;
+          return { x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, depth: 1 };
+        });
+        return line(horizontal, progress => ({ x: card.left + radius + horizontal * progress, y: card.top, depth: 1 }))
+          || arc(-Math.PI * .5, card.right - radius, card.top + radius)
+          || line(vertical, progress => ({ x: card.right, y: card.top + radius + vertical * progress, depth: 1 }))
+          || arc(0, card.right - radius, card.bottom - radius)
+          || line(horizontal, progress => ({ x: card.right - radius - horizontal * progress, y: card.bottom, depth: 1 }))
+          || arc(Math.PI * .5, card.left + radius, card.bottom - radius)
+          || line(vertical, progress => ({ x: card.left, y: card.bottom - radius - vertical * progress, depth: 1 }))
+          || arc(Math.PI, card.left + radius, card.top + radius);
+      }
+
+      function drawNeonOrbiter(target, head, trailPoints, pulse) {
+        const tail = trailPoints[0];
+        const trail = target.createLinearGradient(tail.x, tail.y, head.x, head.y);
+        trail.addColorStop(0, 'rgba(42, 118, 255, 0)');
+        trail.addColorStop(.42, 'rgba(45, 140, 255, .018)');
+        trail.addColorStop(.80, 'rgba(64, 205, 255, .085)');
+        trail.addColorStop(1, 'rgba(181, 250, 255, .30)');
+        target.save();
+        target.globalCompositeOperation = 'lighter';
+        target.lineCap = 'round';
+        target.strokeStyle = trail;
+        target.lineWidth = 1.15;
+        target.shadowColor = 'rgba(43, 177, 255, .52)';
+        target.shadowBlur = 7;
+        target.beginPath();
+        trailPoints.forEach((point, index) => index ? target.lineTo(point.x, point.y) : target.moveTo(point.x, point.y));
+        target.stroke();
+        const halo = target.createRadialGradient(head.x, head.y, 0, head.x, head.y, 19);
+        halo.addColorStop(0, `rgba(231, 255, 255, ${.48 * pulse})`);
+        halo.addColorStop(.13, `rgba(99, 231, 255, ${.27 * pulse})`);
+        halo.addColorStop(.46, `rgba(31, 139, 255, ${.075 * pulse})`);
+        halo.addColorStop(1, 'rgba(20, 76, 255, 0)');
+        target.fillStyle = halo; target.fillRect(head.x - 22, head.y - 22, 44, 44);
+        target.fillStyle = 'rgba(226, 255, 255, .66)';
+        target.beginPath(); target.arc(head.x, head.y, 2.15, 0, Math.PI * 2); target.fill();
+        target.restore();
+      }
+
+      function drawBlueNeonOrbit(t) {
+        if (reducedMotion || blueOutlineStartedAt === null) return;
+        const activeTime = t - blueOutlineStartedAt;
+        const trailPoints = Array.from({ length: 18 }, (_, index) => roundedCardPoint(activeTime, .78 * (1 - index / 17)));
+        const head = trailPoints[trailPoints.length - 1];
+        const pulse = .78 + Math.sin(t * 1.65) * .12 + Math.sin(t * .61) * .06;
+        drawNeonOrbiter(orbitCtx, head, trailPoints, pulse);
+      }
+
+      function updateOrbiterRollover(event) {
+        if (!orbiterHit || reducedMotion) return;
+        const distance = Math.hypot(event.clientX - orbiterHit.x, event.clientY - orbiterHit.y);
+        const visible = distance <= 34;
+        orbiterLabel.classList.toggle('visible', visible);
+        if (!visible) return;
+        orbiterLabel.style.left = `${Math.min(width - 170, Math.max(8, orbiterHit.x))}px`;
+        orbiterLabel.style.top = `${Math.min(height - 28, Math.max(28, orbiterHit.y))}px`;
+      }
+
+      function render() {
+        orbitCtx.clearRect(0, 0, width, height);
+        drawPlasma(animationTime); drawFilaments(animationTime); drawParticles(animationTime);
+        drawMeteors(animationTime); drawHiddenOrbit(animationTime); drawBlueNeonOrbit(animationTime);
+        updateOrbiterRollover(hoverPointer);
+      }
+      function stop() {
+        cancelAnimationFrame(frameId); frameId = 0; lastFrame = 0; previousTick = 0;
+        sampledFrames = 0; slowFrames = 0;
+      }
+      function syncAnimation() {
+        stop();
+        if (canAnimate()) frameId = requestAnimationFrame(draw);
+      }
+      function updateEconomy() {
+        document.body.classList.toggle('economy-mode', economy || reducedMotion);
+        economyButton.setAttribute('aria-pressed', String(economy || reducedMotion));
+        economyButton.textContent = reducedMotion ? 'Reduced motion enabled' : `Economy mode: ${economy ? 'On' : 'Off'}`;
+        economyButton.disabled = reducedMotion;
+        orbiterLabel.classList.remove('visible');
+        syncAnimation();
+      }
+      function draw(ms) {
+        frameId = 0;
+        if (!canAnimate()) return;
+        // Skip drawing between 30 FPS deadlines, independently of monitor refresh rate.
+        if (previousTick && ms - previousTick < frameInterval - .5) {
+          frameId = requestAnimationFrame(draw); return;
+        }
+        const elapsed = lastFrame ? ms - lastFrame : frameInterval;
+        previousTick = ms - ((ms - previousTick) % frameInterval);
+        lastFrame = ms;
+        const delta = Math.min(elapsed / 1000, .1);
+        animationTime += delta;
+        const ease = 1 - Math.pow(.965, delta * 60);
+        pointer.x += (pointerTarget.x - pointer.x) * ease;
+        pointer.y += (pointerTarget.y - pointer.y) * ease;
+        const started = performance.now();
+        render();
+        // Sustained missed deadlines or expensive drawing switches to a static scene.
+        if (elapsed > 55 || performance.now() - started > 24) slowFrames++;
+        if (++sampledFrames >= 90) {
+          if (slowFrames > 30) { economy = true; updateEconomy(); return; }
+          sampledFrames = 0; slowFrames = 0;
+        }
+        frameId = requestAnimationFrame(draw);
+      }
+      let resizeTimer;
+      addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { resize(); render(); syncAnimation(); }, 120);
+      }, { passive: true });
+      new ResizeObserver(() => { cardBounds = frontCard.getBoundingClientRect(); }).observe(frontCard);
+      document.fonts?.ready.then(() => { cardBounds = frontCard.getBoundingClientRect(); });
+      addEventListener('pointermove', event => {
+        hoverPointer.clientX = event.clientX; hoverPointer.clientY = event.clientY;
+        pointerTarget.x = event.clientX / width; pointerTarget.y = event.clientY / height;
+      }, { passive: true });
+      addEventListener('pointerleave', () => {
+        hoverPointer.clientX = -999; hoverPointer.clientY = -999; orbiterLabel.classList.remove('visible');
+      }, { passive: true });
+      document.addEventListener('visibilitychange', syncAnimation);
+      document.addEventListener('focusin', () => {
+        if (isEditing() && blueOutlineStartedAt === null) blueOutlineStartedAt = animationTime;
+        syncAnimation();
+      });
+      document.addEventListener('focusout', () => queueMicrotask(syncAnimation));
+      motionPreference.addEventListener('change', event => { reducedMotion = event.matches; updateEconomy(); });
+      economyButton.addEventListener('click', () => {
+        economy = !economy;
+        try { localStorage.setItem('communique-economy', String(economy)); } catch (_) {}
+        updateEconomy();
+      });
+      resize(); render(); updateEconomy();
+    })();
+    (() => {
+      const flag = document.querySelector('#location-flag');
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const timezoneCountries = {
+        'Asia/Taipei': 'TW', 'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Shanghai': 'CN', 'Asia/Hong_Kong': 'HK', 'Asia/Singapore': 'SG', 'Asia/Bangkok': 'TH', 'Asia/Ho_Chi_Minh': 'VN', 'Asia/Jakarta': 'ID', 'Asia/Kolkata': 'IN', 'Asia/Dubai': 'AE',
+        'Europe/London': 'GB', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE', 'Europe/Rome': 'IT', 'Europe/Madrid': 'ES', 'Europe/Lisbon': 'PT',
+        'America/New_York': 'US', 'America/Chicago': 'US', 'America/Denver': 'US', 'America/Los_Angeles': 'US', 'America/Toronto': 'CA', 'America/Vancouver': 'CA', 'America/Sao_Paulo': 'BR', 'America/Mexico_City': 'MX',
+        'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ'
+      };
+      const countryFlag = code => code && code.length === 2
+        ? [...code.toUpperCase()].map(letter => String.fromCodePoint(127397 + letter.charCodeAt(0))).join('')
+        : '◎';
+      const countryName = code => {
+        try { return new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' }).of(code); }
+        catch (_) { return code; }
+      };
+      function showLocation(code, ipTimezone, source) {
+        const safeCode = /^[A-Z]{2}$/.test(code || '') ? code : null;
+        flag.textContent = countryFlag(safeCode);
+        const locationName = safeCode ? countryName(safeCode) : 'Location unavailable';
+        const timezoneText = ipTimezone && ipTimezone !== browserTimezone ? `${browserTimezone} · IP: ${ipTimezone}` : browserTimezone;
+        flag.setAttribute('aria-label', `${locationName}, ${timezoneText}`);
+        flag.title = `${locationName} · ${timezoneText} · ${source}`;
+      }
+
+      const fallbackCountry = timezoneCountries[browserTimezone] || null;
+      showLocation(fallbackCountry, browserTimezone, 'Timezone');
+
+      let cachedLocation = null;
+      try { cachedLocation = JSON.parse(sessionStorage.getItem('communique-ip-location')); } catch (_) {}
+      if (cachedLocation?.country_code) {
+        showLocation(cachedLocation.country_code, cachedLocation.timezone, 'IP + timezone');
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2800);
+      fetch('https://ipapi.co/json/', { signal: controller.signal })
+        .then(response => response.ok ? response.json() : Promise.reject(new Error('Location lookup failed')))
+        .then(location => {
+          if (!location.country_code) return;
+          showLocation(location.country_code, location.timezone, 'IP + timezone');
+          try { sessionStorage.setItem('communique-ip-location', JSON.stringify({ country_code: location.country_code, timezone: location.timezone })); } catch (_) {}
+        })
+        .catch(() => {})
+        .finally(() => clearTimeout(timeout));
+    })();
+    const form = document.querySelector('#login-form'); const password = document.querySelector('#password'); const toggle = document.querySelector('.toggle-password'); const status = document.querySelector('#status');
+    toggle.addEventListener('click', () => { const visible = password.type === 'text'; password.type = visible ? 'password' : 'text'; toggle.textContent = visible ? 'Show' : 'Hide'; toggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password'); });
+    const flipCard = document.querySelector('#flip-card');
+    const loginFront = document.querySelector('.login-front');
+    const loginBack = document.querySelector('.login-back');
+    const goToCommunique = document.querySelector('#go-communique');
+    const availableCountries = [
+      { code: 'BR', name: 'Brasil' }, { code: 'MOG', name: 'MOG', icon: 'M' }, { code: 'CL', name: 'Chile' },
+      { code: 'CO', name: 'Colombia' }, { code: 'PE', name: 'Peru' }, { code: 'BO', name: 'Bolivia' },
+      { code: 'PY', name: 'Paraguai' }, { code: 'CR', name: 'Costa Rica' }, { code: 'SV', name: 'El Salvador' },
+      { code: 'GT', name: 'Guatemala' }, { code: 'HN', name: 'Honduras' }, { code: 'PA', name: 'Panama' }
+    ];
+    const flagEmoji = code => [...code].map(letter => String.fromCodePoint(127397 + letter.charCodeAt(0))).join('');
+    function secureRandom(max) {
+      return crypto.getRandomValues(new Uint32Array(1))[0] % max;
+    }
+    function animateNewNotification(total) {
+      const panel = document.querySelector('#notification-panel');
+      const count = document.querySelector('#notification-count');
+      if (total !== undefined) count.textContent = String(total);
+      panel.classList.remove('is-new');
+      void panel.offsetWidth;
+      panel.classList.add('is-new');
+      const finish = event => {
+        if (event.animationName !== 'notification-tile') return;
+        panel.classList.remove('is-new');
+        panel.removeEventListener('animationend', finish);
+      };
+      panel.addEventListener('animationend', finish);
+    }
+    window.showNewNotification = animateNewNotification;
+    function prepareAccountOverview() {
+      const notificationTotal = 10 + secureRandom(191);
+      const countryTotal = 1 + secureRandom(7);
+      const countries = [...availableCountries];
+      for (let index = countries.length - 1; index > 0; index--) {
+        const swapIndex = secureRandom(index + 1);
+        [countries[index], countries[swapIndex]] = [countries[swapIndex], countries[index]];
+      }
+      const selectedCountries = countries.slice(0, countryTotal);
+      document.querySelector('#notification-count').textContent = String(notificationTotal);
+      document.querySelector('#country-count').textContent = `(${countryTotal})`;
+      const countryList = document.querySelector('#country-list');
+      countryList.classList.toggle('multi-column', countryTotal >= 4);
+      countryList.replaceChildren(...selectedCountries.map(country => {
+        const chip = document.createElement('span');
+        chip.className = 'country-chip';
+        const icon = document.createElement('span');
+        icon.className = 'country-flag';
+        icon.textContent = country.icon || flagEmoji(country.code);
+        icon.setAttribute('aria-hidden', 'true');
+        const name = document.createElement('span');
+        name.className = 'country-name';
+        name.textContent = country.name;
+        chip.title = country.name;
+        chip.append(icon, name);
+        return chip;
+      }));
+      const updatedAt = new Date(document.lastModified);
+      const updateElement = document.querySelector('#system-update');
+      updateElement.dateTime = updatedAt.toISOString();
+      updateElement.textContent = new Intl.DateTimeFormat(navigator.language || 'en', { year: 'numeric', month: 'short', day: 'numeric' }).format(updatedAt);
+      const lastAccessElement = document.querySelector('#last-access');
+      let previousAccess = null;
+      try { previousAccess = localStorage.getItem('communique-last-successful-access'); } catch (_) {}
+      const previousDate = previousAccess ? new Date(previousAccess) : null;
+      if (previousDate && !Number.isNaN(previousDate.getTime())) {
+        lastAccessElement.dateTime = previousDate.toISOString();
+        lastAccessElement.textContent = new Intl.DateTimeFormat(navigator.language || 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(previousDate);
+      } else {
+        lastAccessElement.removeAttribute('datetime');
+        lastAccessElement.textContent = 'First access on this device';
+      }
+      try { localStorage.setItem('communique-last-successful-access', new Date().toISOString()); } catch (_) {}
+    }
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const username = document.querySelector('#email').value.trim().toLowerCase();
+      if (username !== 'c' || password.value !== 'c') {
+        status.textContent = 'Invalid credentials. Use c and c for this test.';
+        return;
+      }
+      status.textContent = 'Access granted.';
+      form.querySelectorAll('input, button').forEach(control => control.disabled = true);
+      prepareAccountOverview();
+      setTimeout(() => {
+        flipCard.classList.add('is-flipped');
+        loginFront.setAttribute('aria-hidden', 'true');
+        loginBack.setAttribute('aria-hidden', 'false');
+        setTimeout(() => animateNewNotification(), 720);
+        setTimeout(() => goToCommunique.focus(), 1180);
+      }, 240);
+    });
+    goToCommunique.addEventListener('click', () => location.reload());
+  </script>
+</body>
+</html>
