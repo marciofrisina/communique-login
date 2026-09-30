@@ -9,3 +9,5 @@ A redução de CPU/GPU precisa ser medida nos dispositivos afetados; não há pe
 ## Validação
 
 Chromium headless, viewport 1440 × 1000, DPR 2: canvas de 1440 × 1000; 29 renderizações em 1,1 s na última execução (limite de 30 FPS). Nenhum redesenho durante foco nos campos, modo econômico e movimento reduzido. Verificados login inválido/válido, mostrar senha, flip, persistência do modo econômico e alteração da preferência de movimento reduzido em tempo real. Layout conferido em 1440 × 1000 e 390 × 844. Pausa/retomada verificada com evento de visibilidade simulado; fallback automático verificado com custo de renderização artificial de 28 ms. Sem erros JavaScript. Não representa medição de CPU/GPU em dispositivos reais.
+
+Ajuste visual: 115–139 partículas base (antes 85–99), cometas em duas trilhas com primeira aparição em 5–10 s / 12–17 s de animação e intervalo individual de 12–24 s após cada passagem. Limite de 30 FPS e pausas mantidos.

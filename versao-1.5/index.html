@@ -203,14 +203,14 @@
         canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         orbitForeground.width = Math.round(width * dpr); orbitForeground.height = Math.round(height * dpr); orbitCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const detail = .55;
-        const amount = Math.max(85, Math.round(Math.max(95, Math.min(180, width * height / 10500)) * detail));
+        const amount = Math.max(115, Math.round(Math.max(95, Math.min(180, width * height / 10500)) * detail * 1.4));
         particles = Array.from({ length: amount }, () => ({ angle: random(0, Math.PI * 2), radius: random(.05, 1.16), drift: random(.006, .024) * (Math.random() < .5 ? -1 : 1), pulse: random(0, Math.PI * 2), size: random(.25, 1.25), color: colors[Math.floor(random(0, colors.length))] }));
         blobs = Array.from({ length: Math.round(6 + detail * 3) }, (_, i) => ({ angle: random(0, Math.PI * 2), radius: random(.10, .92), spread: random(.26, .54), phase: random(0, Math.PI * 2), rate: random(.008, .028) * (i % 2 ? -1 : 1), color: colors[Math.floor(random(0, 3))] }));
         sparks = Array.from({ length: Math.max(12, Math.round(amount * .16)) }, () => ({ angle: random(0, Math.PI * 2), radius: random(.18, 1.28), speed: random(.014, .043) * (Math.random() < .5 ? -1 : 1), phase: random(0, Math.PI * 2), size: random(.55, 1.85) }));
         filaments = Array.from({ length: Math.round(7 + detail * 3) }, (_, i) => ({ radius: random(.44, 1.08), squash: random(.43, .91), tilt: random(0, Math.PI), rate: random(.006, .025) * (i % 2 ? -1 : 1), phase: random(0, Math.PI * 2), alpha: random(.07, .20), width: random(.45, 1.25), color: colors[Math.floor(random(0, colors.length))] }));
         filamentSteps = Math.round(66 + detail * 30);
         galaxyClouds = Array.from({ length: 4 }, (_, i) => ({ x: i < 2 ? random(-.05, .26) : random(.74, 1.05), y: random(.04, .96), radius: random(.20, .39), squash: random(.28, .68), angle: random(-.8, .8), phase: random(0, Math.PI * 2), rate: random(.004, .012) * (i % 2 ? -1 : 1), color: [[47, 84, 180], [63, 108, 214], [82, 93, 184]][i % 3] }));
-        meteors = [{ active: false, next: random(16, 36) }];
+        meteors = Array.from({ length: 2 }, (_, index) => ({ active: false, next: animationTime + random(5, 10) + index * 7 }));
         orbiter = { radiusX: width * .50, radiusY: Math.max(height * .29, 175), tilt: -.18, phase: random(0, Math.PI * 2), speed: Math.PI * 2 / 120 };
       }
 
@@ -310,7 +310,7 @@
           if (!meteor.active && t >= meteor.next) launchMeteor(meteor, t);
           if (!meteor.active) return;
           const progress = (t - meteor.start) / meteor.duration;
-          if (progress >= 1) { meteor.active = false; meteor.next = t + random(30, 55); return; }
+          if (progress >= 1) { meteor.active = false; meteor.next = t + random(12, 24); return; }
           const x = meteor.x + meteor.dx * progress, y = meteor.y + meteor.dy * progress;
           const tail = Math.min(1, progress * 4, (1 - progress) * 5);
           const tx = x - meteor.dx * .115, ty = y - meteor.dy * .115;
